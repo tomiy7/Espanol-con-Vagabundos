@@ -1,0 +1,39 @@
+﻿
+/ARCHITECTURE.md
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+**/shelf
+
+
+# Secrets
+.env
+*.env.local
+
+# .NET build outputs
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.userprefs
+
+# Rider
+.idea/
+
+# NuGet
+*.nupkg
+*.nuspec
+.nuget/
+
+# Logs
+*.log
+logs/
+
+# User-specific files
+*.rsuser
+*.userosscache
+*.sln.docstates
