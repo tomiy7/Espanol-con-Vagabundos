@@ -1,7 +1,9 @@
-﻿using AuthService.API.Data;
+﻿using System.Security.Claims;
+using AuthService.API.Data;
 using AuthService.API.DTOs;
 using AuthService.API.Entities;
 using AuthService.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,5 +49,32 @@ public class AuthController : ControllerBase
         await _dbContext.AddAsync(user);
         await _dbContext.SaveChangesAsync();
         return Ok(new { token = _tokenService.GenerateToken(user) });
+    }
+
+    [HttpPost("login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> LoginAsync(LoginRequestDto loginRequestDto)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u =>
+            u.Email == loginRequestDto.Identifier || u.Username == loginRequestDto.Identifier);
+
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
+            return Unauthorized(new { error = "INVALID_CREDENTIALS" });
+        
+        return Ok(new { token = _tokenService.GenerateToken(user) });
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult Me()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        var username = User.FindFirstValue("username");
+        return Ok(new { userId, email, username });
     }
 }

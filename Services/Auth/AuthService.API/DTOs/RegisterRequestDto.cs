@@ -16,10 +16,12 @@ public class RegisterRequestDto
     [RegularExpression(@"^(\+381|0)6[0-9]{7,8}$", ErrorMessage = "Phone number must be in format 06XXXXXXXX or +3816XXXXXXXX")]
     public string Phone { get; set; } = string.Empty;
     
-    [Required, MinLength(8)]
+    [Required]
+    [MinLength(8, ErrorMessage = "Password must have at least 8 characters")]
     public string Password { get; set; } = string.Empty;
     
-    [Required, MinLength(8)]
+    [Required]
+    [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
     public string ConfirmPassword { get; set; } = string.Empty;
     
     [Required]
