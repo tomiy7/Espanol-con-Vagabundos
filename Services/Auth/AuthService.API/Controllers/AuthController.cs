@@ -14,14 +14,16 @@ namespace AuthService.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly ILogger<AuthController> _logger;
+    private readonly IConfiguration _config;
     private readonly AppDbContext _dbContext;
     private readonly TokenService _tokenService;
 
-    public AuthController(ILogger<AuthController> logger, AppDbContext dbContext, TokenService tokenService)
+    public AuthController(ILogger<AuthController> logger, AppDbContext dbContext, TokenService tokenService, IConfiguration config)
     {
         _logger = logger;
         _dbContext = dbContext;
         _tokenService = tokenService;
+        _config = config;
     }
 
     [HttpPost("register")]
@@ -48,7 +50,9 @@ public class AuthController : ControllerBase
 
         await _dbContext.AddAsync(user);
         await _dbContext.SaveChangesAsync();
-        return Ok(new { token = _tokenService.GenerateToken(user) });
+        
+        var tokens= await IssueTokens(user);
+        return Ok(tokens);
     }
 
     [HttpPost("login")]
@@ -63,7 +67,45 @@ public class AuthController : ControllerBase
         if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
             return Unauthorized(new { error = "INVALID_CREDENTIALS" });
         
-        return Ok(new { token = _tokenService.GenerateToken(user) });
+        var tokens= await IssueTokens(user);
+        return Ok(tokens);
+    }
+    
+    [HttpPost("refresh")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshAsync(RefreshRequestDto refreshRequestDto)
+    {
+        var storedToken = await _dbContext.RefreshTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Token == refreshRequestDto.RefreshToken);
+        
+        if (storedToken == null || !storedToken.IsActive)
+            return Unauthorized(new { error = "INVALID_REFRESH_TOKEN" });
+        
+        storedToken.RevokedAt = DateTime.UtcNow;
+        
+        var tokens = await IssueTokens(storedToken.User);
+        await _dbContext.SaveChangesAsync();
+        return Ok(tokens);
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> LogoutAsync(RefreshRequestDto refreshRequestDto)
+    {
+        var storedToken = await _dbContext.RefreshTokens
+            .FirstOrDefaultAsync(t => t.Token == refreshRequestDto.RefreshToken);
+
+        if (storedToken != null)
+        {
+            storedToken.RevokedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync();
+        }
+        
+        return Ok(new { message = "Successfuly  logged out" });
     }
 
     [HttpGet("me")]
@@ -76,5 +118,24 @@ public class AuthController : ControllerBase
         var email = User.FindFirstValue(ClaimTypes.Email);
         var username = User.FindFirstValue("username");
         return Ok(new { userId, email, username });
+    }
+
+    private async Task<AuthResponseDto> IssueTokens(User user)
+    {
+        var accessToken = _tokenService.GenerateAccessToken(user);
+        var refreshTokenValue = _tokenService.GenerateRefreshToken();
+        var refreshTokenDays = _config.GetValue<int>("Jwt:RefreshTokenDays", 60);
+
+        var refreshToken = new RefreshToken
+        {
+            UserId = user.Id,
+            Token = refreshTokenValue,
+            ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenDays)
+        };
+        
+        await _dbContext.RefreshTokens.AddAsync(refreshToken);
+        await _dbContext.SaveChangesAsync();
+        
+        return new AuthResponseDto { AccessToken = accessToken, RefreshToken = refreshTokenValue };
     }
 }

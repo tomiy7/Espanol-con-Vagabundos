@@ -9,7 +9,7 @@ public class AppDbContext : DbContext
         : base(options) {}
     
     public DbSet<User> Users => Set<User>();
-
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>()
@@ -19,5 +19,15 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
+        
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(u => u.Token)
+            .IsUnique();
+        
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

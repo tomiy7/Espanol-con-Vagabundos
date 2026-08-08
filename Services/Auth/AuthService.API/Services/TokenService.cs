@@ -1,12 +1,13 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using AuthService.API.Entities;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.API.Services;
 
-public class TokenService
+public class TokenService : ITokenService
 {
     private readonly IConfiguration _config;
     
@@ -15,7 +16,7 @@ public class TokenService
         _config = config;
     }
 
-    public string GenerateToken(User user)
+    public string GenerateAccessToken(User user)
     {
         var secret = _config["Jwt:Secret"]!;
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
@@ -35,5 +36,13 @@ public class TokenService
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
         
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        return Convert.ToBase64String(randomBytes);
     }
 }
