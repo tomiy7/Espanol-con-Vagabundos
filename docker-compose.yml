@@ -2,9 +2,16 @@ services:
   
   authdb:
     image: postgres:16
+    
+  coursesdb:
+    image: postgres:16
+    
+  directus:
+    image: directus/directus:latest
 
 volumes:
   auth_data:
+  courses_data:
     
 networks:
   backend:

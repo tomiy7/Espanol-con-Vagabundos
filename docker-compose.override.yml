@@ -1,5 +1,6 @@
 services:
   
+  # DB for auth service
   authdb:
     container_name: authdb
     environment:
@@ -11,5 +12,40 @@ services:
     restart: always
     volumes:
       - auth_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    
+  # DB for courses service + directus
+  coursesdb:
+    container_name: coursesdb
+    environment:
+      POSTGRES_DB: coursesdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5434:5432"
+    restart: always
+    volumes:
+      - courses_data:/var/lib/postgresql/data
+    networks:
+      - backend
+  
+  # Directus CMS
+  directus:
+    container_name: directus
+    ports:
+      - "8055:8055"
+    environment:
+      SECRET: ${DIRECTUS_SECRET}
+      DB_CLIENT: pg
+      DB_HOST: coursesdb
+      DB_PORT: 5432
+      DB_DATABASE: coursesdb
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD}
+    depends_on:
+      - coursesdb
     networks:
       - backend
