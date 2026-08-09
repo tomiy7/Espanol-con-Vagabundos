@@ -45,7 +45,8 @@ public class AuthController : ControllerBase
             Phone = registerRequestDto.Phone,
             FirstName = registerRequestDto.FirstName,
             LastName = registerRequestDto.LastName,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerRequestDto.Password)
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerRequestDto.Password),
+            Role = Roles.Student
         };
 
         await _dbContext.AddAsync(user);
@@ -106,6 +107,58 @@ public class AuthController : ControllerBase
         }
         
         return Ok(new { message = "Successfuly  logged out" });
+    }
+
+    [HttpGet("admin/users")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var users = await _dbContext.Users.ToListAsync();
+        
+        var response = users.Select(user => new UserDetailResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Phone = user.Phone,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt
+        }).ToList();
+        
+        return Ok(response);
+    }
+
+    [HttpGet("admin/users/{userId}")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(typeof(UserDetailResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserById(Guid userId)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        
+        if (user == null)
+            return NotFound(new
+            {
+                error = "USER_NOT_FOUND",
+                message = "User not found"
+            });
+        return Ok(new UserDetailResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Phone = user.Phone,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt,
+        });
     }
 
     [HttpGet("me")]
