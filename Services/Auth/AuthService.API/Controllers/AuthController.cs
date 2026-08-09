@@ -28,21 +28,29 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RegisterAsync(RegisterRequestDto registerRequestDto)
     {
         if (await _userRepository.EmailExistsAsync(registerRequestDto.Email))
         {
             _logger.LogWarning("Registration failed: email {Email} alredy exists", registerRequestDto.Email);
-            return Conflict(new { error = "EMAIL_EXISTS" });
+            return Conflict(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.EmailExists,
+                Message = "Email already exists"
+            });
         }
 
         if (await _userRepository.UsernameExistsAsync(registerRequestDto.Username))
         {
             _logger.LogWarning("Registration failed: username {Username} alredy exists", registerRequestDto.Username);
-            return Conflict(new { error = "USERNAME_EXISTS" });
+            return Conflict(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.UsernameExists,
+                Message = "Username already exists"
+            });
         }
 
         var user = new User()
@@ -62,13 +70,13 @@ public class AuthController : ControllerBase
         _logger.LogInformation("User {Username} with email {Email} successfully registered: Id - {UserId}", user.Username, user.Email, user.Id);
         
         var tokens= await IssueTokens(user);
-        return Ok(tokens);
+        return StatusCode(StatusCodes.Status201Created, tokens);
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> LoginAsync(LoginRequestDto loginRequestDto)
     {
         var user = await _userRepository.GetByIdentifierAsync(loginRequestDto.Identifier);
@@ -76,7 +84,11 @@ public class AuthController : ControllerBase
         if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
         {
             _logger.LogWarning("Failed login attempt for identifier: {Identifier}", loginRequestDto.Identifier);
-            return Unauthorized(new { error = "INVALID_CREDENTIALS" });
+            return Unauthorized(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.InvalidCredentials,
+                Message = "Wrong username or password"
+            });
         }
         
         _logger.LogInformation("User {Username} successfully logged in", user.Username);
@@ -86,8 +98,9 @@ public class AuthController : ControllerBase
     }
     
     [HttpPost("refresh")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshAsync(RefreshRequestDto refreshRequestDto)
     {
         var storedToken = await _refreshTokenRepository.GetByTokenAsync(refreshRequestDto.RefreshToken);
@@ -95,7 +108,11 @@ public class AuthController : ControllerBase
         if (storedToken == null || !storedToken.IsActive)
         {
             _logger.LogWarning("Invalid or expired refresh token attempted");
-            return Unauthorized(new { error = "INVALID_REFRESH_TOKEN" });
+            return Unauthorized(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.InvalidRefreshToken,
+                Message = "Refresh token is invalid or expired"
+            });
         }
         
         storedToken.RevokedAt = DateTime.UtcNow;
@@ -131,8 +148,9 @@ public class AuthController : ControllerBase
 
     [HttpGet("admin/users")]
     [Authorize(Roles = Roles.Admin)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<UserDetailResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _userRepository.GetAllUsersAsync();
@@ -157,16 +175,16 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(UserDetailResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUserById(Guid userId)
     {
         var user = await _userRepository.GetUserByIdAsync(userId);
         
         if (user == null)
-            return NotFound(new
+            return NotFound(new ErrorResponseDto
             {
-                error = "USER_NOT_FOUND",
-                message = "User not found"
+                Error = AuthErrorCodes.UserNotFound,
+                Message = "User not found"
             });
         return Ok(new UserDetailResponseDto
         {
