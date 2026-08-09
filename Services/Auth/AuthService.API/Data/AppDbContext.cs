@@ -19,6 +19,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .ToTable(t => t.HasCheckConstraint(
+                "CK_Users_Role",
+                $"role IN ('{Roles.Student}', '{Roles.Professor}', '{Roles.Admin}')"
+            ));
         
         modelBuilder.Entity<RefreshToken>()
             .HasIndex(u => u.Token)

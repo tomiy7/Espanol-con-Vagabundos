@@ -1,11 +1,10 @@
 ﻿using System.Security.Claims;
-using AuthService.API.Data;
 using AuthService.API.DTOs;
 using AuthService.API.Entities;
+using AuthService.API.Repositories;
 using AuthService.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.API.Controllers;
 
@@ -15,13 +14,15 @@ public class AuthController : ControllerBase
 {
     private readonly ILogger<AuthController> _logger;
     private readonly IConfiguration _config;
-    private readonly AppDbContext _dbContext;
+    private readonly IUserRepository _userRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly TokenService _tokenService;
 
-    public AuthController(ILogger<AuthController> logger, AppDbContext dbContext, TokenService tokenService, IConfiguration config)
+    public AuthController(ILogger<AuthController> logger, IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository, TokenService tokenService, IConfiguration config)
     {
         _logger = logger;
-        _dbContext = dbContext;
+        _userRepository = userRepository;
+        _refreshTokenRepository = refreshTokenRepository;
         _tokenService = tokenService;
         _config = config;
     }
@@ -32,13 +33,13 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RegisterAsync(RegisterRequestDto registerRequestDto)
     {
-        if (await _dbContext.Users.AnyAsync(u => u.Email == registerRequestDto.Email))
+        if (await _userRepository.EmailExistsAsync(registerRequestDto.Email))
         {
             _logger.LogWarning("Registration failed: email {Email} alredy exists", registerRequestDto.Email);
             return Conflict(new { error = "EMAIL_EXISTS" });
         }
 
-        if (await _dbContext.Users.AnyAsync(u => u.Username == registerRequestDto.Username))
+        if (await _userRepository.UsernameExistsAsync(registerRequestDto.Username))
         {
             _logger.LogWarning("Registration failed: username {Username} alredy exists", registerRequestDto.Username);
             return Conflict(new { error = "USERNAME_EXISTS" });
@@ -55,8 +56,8 @@ public class AuthController : ControllerBase
             Role = Roles.Student
         };
 
-        await _dbContext.AddAsync(user);
-        await _dbContext.SaveChangesAsync();
+        await _userRepository.AddUserAsync(user);
+        await _userRepository.SaveChangesAsync();
         
         _logger.LogInformation("User {Username} with email {Email} successfully registered: Id - {UserId}", user.Username, user.Email, user.Id);
         
@@ -70,8 +71,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> LoginAsync(LoginRequestDto loginRequestDto)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u =>
-            u.Email == loginRequestDto.Identifier || u.Username == loginRequestDto.Identifier);
+        var user = await _userRepository.GetByIdentifierAsync(loginRequestDto.Identifier);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
         {
@@ -90,9 +90,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshAsync(RefreshRequestDto refreshRequestDto)
     {
-        var storedToken = await _dbContext.RefreshTokens
-            .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Token == refreshRequestDto.RefreshToken);
+        var storedToken = await _refreshTokenRepository.GetByTokenAsync(refreshRequestDto.RefreshToken);
 
         if (storedToken == null || !storedToken.IsActive)
         {
@@ -105,7 +103,7 @@ public class AuthController : ControllerBase
         _logger.LogInformation("Token refreshed for user {UserId}", storedToken.UserId);
         
         var tokens = await IssueTokens(storedToken.User);
-        await _dbContext.SaveChangesAsync();
+        await _refreshTokenRepository.SaveChangesAsync();
         return Ok(tokens);
     }
 
@@ -115,13 +113,12 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> LogoutAsync(RefreshRequestDto refreshRequestDto)
     {
-        var storedToken = await _dbContext.RefreshTokens
-            .FirstOrDefaultAsync(t => t.Token == refreshRequestDto.RefreshToken);
+        var storedToken = await _refreshTokenRepository.GetByTokenAsync(refreshRequestDto.RefreshToken);
 
         if (storedToken != null)
         {
             storedToken.RevokedAt = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync();
+            await _refreshTokenRepository.SaveChangesAsync();
             _logger.LogInformation("User logged out: {UserId}", storedToken.UserId);
         }
         else
@@ -138,7 +135,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllUsers()
     {
-        var users = await _dbContext.Users.ToListAsync();
+        var users = await _userRepository.GetAllUsersAsync();
         
         var response = users.Select(user => new UserDetailResponseDto
         {
@@ -163,7 +160,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUserById(Guid userId)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _userRepository.GetUserByIdAsync(userId);
         
         if (user == null)
             return NotFound(new
@@ -209,8 +206,8 @@ public class AuthController : ControllerBase
             ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenDays)
         };
         
-        await _dbContext.RefreshTokens.AddAsync(refreshToken);
-        await _dbContext.SaveChangesAsync();
+        await _refreshTokenRepository.AddAsync(refreshToken);
+        await _refreshTokenRepository.SaveChangesAsync();
         
         return new AuthResponseDto { AccessToken = accessToken, RefreshToken = refreshTokenValue };
     }

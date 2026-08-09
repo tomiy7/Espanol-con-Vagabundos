@@ -1,5 +1,6 @@
 using System.Text;
 using AuthService.API.Data;
+using AuthService.API.Repositories;
 using AuthService.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -26,8 +27,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Add services to the container.
+// Add repositories to the container.
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
+// Add services to the container.
 builder.Services.AddScoped<TokenService>();
 
 builder.Services.AddOpenApi();
