@@ -33,10 +33,16 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RegisterAsync(RegisterRequestDto registerRequestDto)
     {
         if (await _dbContext.Users.AnyAsync(u => u.Email == registerRequestDto.Email))
+        {
+            _logger.LogWarning("Registration failed: email {Email} alredy exists", registerRequestDto.Email);
             return Conflict(new { error = "EMAIL_EXISTS" });
+        }
 
         if (await _dbContext.Users.AnyAsync(u => u.Username == registerRequestDto.Username))
+        {
+            _logger.LogWarning("Registration failed: username {Username} alredy exists", registerRequestDto.Username);
             return Conflict(new { error = "USERNAME_EXISTS" });
+        }
 
         var user = new User()
         {
@@ -52,6 +58,8 @@ public class AuthController : ControllerBase
         await _dbContext.AddAsync(user);
         await _dbContext.SaveChangesAsync();
         
+        _logger.LogInformation("User {Username} with email {Email} successfully registered: Id - {UserId}", user.Username, user.Email, user.Id);
+        
         var tokens= await IssueTokens(user);
         return Ok(tokens);
     }
@@ -66,7 +74,12 @@ public class AuthController : ControllerBase
             u.Email == loginRequestDto.Identifier || u.Username == loginRequestDto.Identifier);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
+        {
+            _logger.LogWarning("Failed login attempt for identifier: {Identifier}", loginRequestDto.Identifier);
             return Unauthorized(new { error = "INVALID_CREDENTIALS" });
+        }
+        
+        _logger.LogInformation("User {Username} successfully logged in", user.Username);
         
         var tokens= await IssueTokens(user);
         return Ok(tokens);
@@ -80,11 +93,16 @@ public class AuthController : ControllerBase
         var storedToken = await _dbContext.RefreshTokens
             .Include(t => t.User)
             .FirstOrDefaultAsync(t => t.Token == refreshRequestDto.RefreshToken);
-        
+
         if (storedToken == null || !storedToken.IsActive)
+        {
+            _logger.LogWarning("Invalid or expired refresh token attempted");
             return Unauthorized(new { error = "INVALID_REFRESH_TOKEN" });
+        }
         
         storedToken.RevokedAt = DateTime.UtcNow;
+        
+        _logger.LogInformation("Token refreshed for user {UserId}", storedToken.UserId);
         
         var tokens = await IssueTokens(storedToken.User);
         await _dbContext.SaveChangesAsync();
@@ -104,6 +122,11 @@ public class AuthController : ControllerBase
         {
             storedToken.RevokedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync();
+            _logger.LogInformation("User logged out: {UserId}", storedToken.UserId);
+        }
+        else
+        {
+            _logger.LogWarning("Logout attempted with unknown or already-revoked refresh token");
         }
         
         return Ok(new { message = "Successfuly  logged out" });
@@ -169,7 +192,7 @@ public class AuthController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var email = User.FindFirstValue(ClaimTypes.Email);
-        var username = User.FindFirstValue("username");
+        var username = User.FindFirstValue(CustomClaimTypes.Username);
         return Ok(new { userId, email, username });
     }
 

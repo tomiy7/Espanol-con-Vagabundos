@@ -25,9 +25,9 @@ public class TokenService : ITokenService
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim("username", user.Username),
-            new Claim("firstName", user.FirstName),
-            new Claim("lastName", user.LastName),
+            new Claim(CustomClaimTypes.Username, user.Username),
+            new Claim(CustomClaimTypes.FirstName, user.FirstName),
+            new Claim(CustomClaimTypes.LastName, user.LastName),
             new Claim(ClaimTypes.Role, user.Role)
         };
 
