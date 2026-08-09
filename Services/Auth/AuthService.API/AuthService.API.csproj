@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
       <UserSecretsId>26de9b8e-1b18-4ef3-b47d-8c461f5c4207</UserSecretsId>
+      <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +22,12 @@
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.2.3" />
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.2.3" />
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>

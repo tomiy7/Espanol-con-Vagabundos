@@ -3,6 +3,12 @@ services:
   authdb:
     image: postgres:16
     
+  auth.api:
+    image: auth.api
+    build:
+      context: .
+      dockerfile: Services/Auth/AuthService.API/Dockerfile
+    
   coursesdb:
     image: postgres:16
     

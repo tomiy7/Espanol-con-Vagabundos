@@ -143,7 +143,7 @@ public class AuthController : ControllerBase
             _logger.LogWarning("Logout attempted with unknown or already-revoked refresh token");
         }
         
-        return Ok(new { message = "Successfuly  logged out" });
+        return Ok(new { message = "Successfuly logged out" });
     }
 
     [HttpGet("admin/users")]
