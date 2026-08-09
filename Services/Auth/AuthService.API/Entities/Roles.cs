@@ -1,0 +1,8 @@
+﻿namespace AuthService.API.Entities;
+
+public class Roles
+{
+    public const string Admin = "admin";
+    public const string Professor = "professor";
+    public const string Student = "student";
+}
