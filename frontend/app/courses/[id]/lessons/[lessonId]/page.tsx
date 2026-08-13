@@ -1,0 +1,107 @@
+type Section = {
+    id: number;
+    title: string;
+    content: {
+        blocks?: { type: string; data: { text?: string; items?: string[] } }[];
+    } | null;
+    order: number;
+};
+
+type Lesson = {
+    id: number;
+    title: string;
+    recording_url: string;
+};
+
+async function getLesson(lessonId: string): Promise<Lesson> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/lessons/${lessonId}`,
+        { cache: "no-store" }
+    );
+    const json = await res.json();
+    return json.data;
+}
+
+async function getSections(lessonId: string): Promise<Section[]> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/sections?filter[lesson_id][_eq]=${lessonId}&sort=order`,
+        { cache: "no-store" }
+    );
+    const json = await res.json();
+    return json.data;
+}
+
+function renderContent(content: Section["content"]) {
+    if (!content || !content.blocks) return null;
+
+    return content.blocks.map((block, i) => {
+        if (block.type === "paragraph") {
+            return (
+                <p key={i} className="mb-3">
+                    {block.data.text}
+                </p>
+            );
+        }
+        if (block.type === "header") {
+            return (
+                <h3 key={i} className="text-lg font-medium mb-2 mt-4">
+                    {block.data.text}
+                </h3>
+            );
+        }
+        if (block.type === "list" && block.data.items) {
+            return (
+                <ul key={i} className="list-disc ml-5 mb-3">
+                    {block.data.items.map((item, j) => (
+                        <li key={j}>{item}</li>
+                    ))}
+                </ul>
+            );
+        }
+        return null;
+    });
+}
+
+export default async function LessonPage({
+                                             params,
+                                         }: {
+    params: Promise<{ id: string; lessonId: string }>;
+}) {
+    const { lessonId } = await params;
+    const lesson = await getLesson(lessonId);
+    const sections = await getSections(lessonId);
+
+    return (
+        <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+            <main className="w-full max-w-3xl py-16 px-6">
+                <h1 className="text-3xl font-semibold mb-2 text-black dark:text-zinc-50">
+                    {lesson.title}
+                </h1>
+
+                {lesson.recording_url && (
+
+                    <a href={lesson.recording_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mb-8 text-blue-600 dark:text-blue-400 underline"
+                    >
+                    Pogledaj snimak lekcije
+                    </a>
+                    )}
+
+                <div className="flex flex-col gap-6">
+                    {sections.map((section) => (
+                        <div key={section.id}>
+                            <h2 className="text-xl font-medium mb-2 text-black dark:text-zinc-50">
+                                {section.title}
+                            </h2>
+                            <div className="text-zinc-700 dark:text-zinc-300">
+                                {renderContent(section.content)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </main>
+        </div>
+    );
+}
