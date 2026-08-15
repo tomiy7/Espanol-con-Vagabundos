@@ -1,17 +1,18 @@
 import Link from "next/link";
 
 type Course = {
-    id: number;
-    title: string;
+    id: string;
+    name: string;
     description: string;
     price: string;
     thumbnail: string;
 };
 
 async function getCourses(): Promise<Course[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/courses`, {
-        cache: "no-store",
-    });
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/courses?filter[is_published][_eq]=true`,
+        { cache: "no-store" }
+    );
     const json = await res.json();
     return json.data;
 }
@@ -36,12 +37,12 @@ export default async function CoursesPage() {
                             {course.thumbnail && (
                                 <img
                                     src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${course.thumbnail}`}
-                                    alt={course.title}
+                                    alt={course.name}
                                     className="w-full rounded-md mb-4"
                                 />
                             )}
                             <h2 className="text-xl font-medium text-black dark:text-zinc-50">
-                                {course.title}
+                                {course.name}
                             </h2>
                             <p className="text-zinc-600 dark:text-zinc-400 mt-2">
                                 {course.description}
