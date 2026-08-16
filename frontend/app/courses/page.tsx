@@ -1,9 +1,20 @@
 import Link from "next/link";
 
+type Block = {
+    type: string;
+    data: {
+        text?: string;
+    };
+};
+
+type RichText = {
+    blocks?: Block[];
+} | null;
+
 type Course = {
     id: string;
     name: string;
-    description: string;
+    description: RichText;
     price: string;
     thumbnail: string;
 };
@@ -15,6 +26,12 @@ async function getCourses(): Promise<Course[]> {
     );
     const json = await res.json();
     return json.data;
+}
+
+function getPreviewText(content: RichText): string {
+    if (!content || !content.blocks) return "";
+    const firstParagraph = content.blocks.find((b) => b.type === "paragraph");
+    return firstParagraph?.data.text?.replace(/&nbsp;/g, " ") || "";
 }
 
 export default async function CoursesPage() {
@@ -45,10 +62,10 @@ export default async function CoursesPage() {
                                 {course.name}
                             </h2>
                             <p className="text-zinc-600 dark:text-zinc-400 mt-2">
-                                {course.description}
+                                {getPreviewText(course.description)}
                             </p>
                             <p className="text-zinc-950 dark:text-zinc-50 font-medium mt-4">
-                                {course.price} €
+                                {parseFloat(course.price)} €
                             </p>
                         </Link>
                     ))}
