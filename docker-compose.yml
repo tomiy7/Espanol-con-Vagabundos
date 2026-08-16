@@ -12,6 +12,12 @@ services:
   coursesdb:
     image: postgres:16
     
+  courses.api:
+    image: courses.api
+    build: 
+      context: .
+      dockerfile: Services/Courses/CoursesService.API/Dockerfile
+    
   directus:
     image: directus/directus:latest
 
