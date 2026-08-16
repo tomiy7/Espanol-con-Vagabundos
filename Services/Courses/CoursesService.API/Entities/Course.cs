@@ -26,10 +26,10 @@ public class Course
     public bool IsPublished { get; set; }
     
     [Column("price")]
-    public decimal Price { get; set; }
+    public float Price { get; set; }
     
     [Column("ebook_price")]
-    public decimal? EbookPrice { get; set; }
+    public float? EbookPrice { get; set; }
     
     [Column("level")]
     [MaxLength(20)]
@@ -48,7 +48,7 @@ public class Course
     public DateTime CreatedAt { get; set; } 
     
     [Column("date_updated")]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     public List<Lesson> Lessons { get; set; } = new();
 }
