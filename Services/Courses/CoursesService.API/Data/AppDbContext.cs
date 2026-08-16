@@ -15,6 +15,19 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Course>().HasIndex(c => c.Slug).IsUnique();
+        modelBuilder.Entity<Lesson>()
+            .HasOne(l => l.Course)
+            .WithMany(c => c.Lessons)
+            .HasForeignKey(l => l.CourseId);
+
+        modelBuilder.Entity<Section>()
+            .HasOne(s => s.Lesson)
+            .WithMany(l => l.Sections)
+            .HasForeignKey(s => s.LessonId);
+
+        modelBuilder.Entity<TaskItem>()
+            .HasOne(t => t.Lesson)
+            .WithMany(l => l.Tasks)
+            .HasForeignKey(t => t.LessonId);
     }
 }

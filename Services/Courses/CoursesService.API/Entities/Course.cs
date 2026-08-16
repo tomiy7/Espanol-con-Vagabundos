@@ -15,7 +15,7 @@ public class Course
     [Required, MaxLength(100)]
     public string Name { get; set; } = string.Empty;
     
-    [Column("slug")]
+    [Column("slug_name")]
     [Required, MaxLength(150)]
     public string Slug { get; set; } = string.Empty;
     
