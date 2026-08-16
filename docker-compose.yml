@@ -14,10 +14,14 @@ services:
     
   directus:
     image: directus/directus:latest
+    
+  groupsdb:
+    image: postgres:16
 
 volumes:
   auth_data:
   courses_data:
+  groups_data:
     
 networks:
   backend:

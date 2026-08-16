@@ -64,3 +64,18 @@ services:
       - coursesdb
     networks:
       - backend
+        
+    # DB for groups service
+    groupsdb:
+      container_name: groupsdb
+      environment:
+        POSTGRES_DB: groupsdb
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: ${DB_PASSWORD}
+      ports:
+        - "5435:5432"
+      volumes:
+        
+      networks:
+        - backend
+        

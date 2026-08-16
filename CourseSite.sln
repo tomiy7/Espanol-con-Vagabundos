@@ -4,6 +4,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoursesService.API", "Servi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.API", "Services\Auth\AuthService.API\AuthService.API.csproj", "{078328A0-9E4A-48A0-9783-D8AE27EF1EFB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Domain", "Services\Groups\GroupsService.Domain\GroupsService.Domain.csproj", "{FDE15354-64FA-46B9-839E-3A86010E4FF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Application", "Services\Groups\GroupsService.Application\GroupsService.Application.csproj", "{B2911D36-BE9F-4D90-B9E5-1395B6908767}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Infrastructure", "Services\Groups\GroupsService.Infrastructure\GroupsService.Infrastructure.csproj", "{DBA25929-6BC3-42D9-B713-8542902C6C17}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsSerice.API", "Services\Groups\GroupsSerice.API\GroupsSerice.API.csproj", "{6318FD6D-F9A2-4213-85E1-96C984B93CE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +26,21 @@ Global
 		{078328A0-9E4A-48A0-9783-D8AE27EF1EFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{078328A0-9E4A-48A0-9783-D8AE27EF1EFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{078328A0-9E4A-48A0-9783-D8AE27EF1EFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDE15354-64FA-46B9-839E-3A86010E4FF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDE15354-64FA-46B9-839E-3A86010E4FF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDE15354-64FA-46B9-839E-3A86010E4FF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDE15354-64FA-46B9-839E-3A86010E4FF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2911D36-BE9F-4D90-B9E5-1395B6908767}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2911D36-BE9F-4D90-B9E5-1395B6908767}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2911D36-BE9F-4D90-B9E5-1395B6908767}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2911D36-BE9F-4D90-B9E5-1395B6908767}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBA25929-6BC3-42D9-B713-8542902C6C17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBA25929-6BC3-42D9-B713-8542902C6C17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBA25929-6BC3-42D9-B713-8542902C6C17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBA25929-6BC3-42D9-B713-8542902C6C17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6318FD6D-F9A2-4213-85E1-96C984B93CE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6318FD6D-F9A2-4213-85E1-96C984B93CE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6318FD6D-F9A2-4213-85E1-96C984B93CE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6318FD6D-F9A2-4213-85E1-96C984B93CE3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
