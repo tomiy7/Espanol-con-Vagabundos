@@ -48,7 +48,7 @@ public class Course
     public DateTime CreatedAt { get; set; } 
     
     [Column("date_updated")]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     public List<Lesson> Lessons { get; set; } = new();
 }

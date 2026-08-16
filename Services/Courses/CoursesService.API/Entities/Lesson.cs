@@ -12,7 +12,7 @@ public class Lesson
     public Guid Id { get; set; }
 
     [Column("date_created")]
-    public DateTime? DateCreated { get; set; }
+    public DateTime DateCreated { get; set; }
 
     [Column("date_updated")]
     public DateTime? DateUpdated { get; set; }
