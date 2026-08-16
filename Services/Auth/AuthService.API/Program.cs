@@ -8,11 +8,23 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 var jwtSecret = builder.Configuration["Jwt:Secret"]
-                ?? throw new InvalidOperationException("Jwt:Secret nije postavljen. Proveri appsettings.json, User Secrets, ili environment varijable.");;
+                ?? throw new InvalidOperationException("Jwt:Secret nije postavljen. Proveri appsettings.json, User Secrets, ili environment varijable.");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -48,7 +60,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
+app.UseCors("Frontend");
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

@@ -14,7 +14,7 @@ services:
       - auth_data:/var/lib/postgresql/data
     networks:
       - backend
-        
+  
   auth.api:
     container_name: auth.api
     ports:
@@ -29,7 +29,7 @@ services:
       - authdb
     networks:
       - backend
-    
+  
   # DB for courses service + directus
   coursesdb:
     container_name: coursesdb
@@ -41,7 +41,7 @@ services:
       - "5434:5432"
     restart: always
     volumes:
-      - courses_data:/var/lib/postgresql/data
+      - espanol_courses_data:/var/lib/postgresql/data
     networks:
       - backend
   
@@ -64,3 +64,12 @@ services:
       - coursesdb
     networks:
       - backend
+
+volumes:
+  auth_data:
+  espanol_courses_data:
+    external: true
+
+networks:
+  backend:
+    driver: bridge
