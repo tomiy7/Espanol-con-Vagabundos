@@ -10,7 +10,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Application",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Infrastructure", "Services\Groups\GroupsService.Infrastructure\GroupsService.Infrastructure.csproj", "{DBA25929-6BC3-42D9-B713-8542902C6C17}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsSerice.API", "Services\Groups\GroupsSerice.API\GroupsSerice.API.csproj", "{6318FD6D-F9A2-4213-85E1-96C984B93CE3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.API", "Services\Groups\GroupsService.API\GroupsService.API.csproj", "{6318FD6D-F9A2-4213-85E1-96C984B93CE3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
