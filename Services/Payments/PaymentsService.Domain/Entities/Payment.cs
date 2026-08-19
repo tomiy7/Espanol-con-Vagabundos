@@ -68,6 +68,14 @@ public class Payment : AggregateRoot
         Status = PaymentStatus.Cancelled;
     }
     
+    public void MarkAsExpired()
+    {
+        if (Status != PaymentStatus.Pending)
+            throw new InvalidOperationException("Only payment in status Pending can be marked as expired.");
+
+        Status = PaymentStatus.Expired;
+    }
+    
     public bool IsCompleted => Status == PaymentStatus.Completed;
     
     public static readonly TimeSpan ExpirationWindow = TimeSpan.FromHours(24);
