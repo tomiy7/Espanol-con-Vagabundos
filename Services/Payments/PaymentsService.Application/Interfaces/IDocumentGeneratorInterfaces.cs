@@ -1,6 +1,6 @@
 ﻿namespace PaymentsService.Application.Interfaces;
 
-public interface IQrCpdeGemerator
+public interface IQrCodeGenerator
 {
     byte[] GenerateIpsQrCode(
         string receiverAccount,
