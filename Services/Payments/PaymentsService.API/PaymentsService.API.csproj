@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
       <UserSecretsId>df74395b-0c85-43be-86ee-d100269ec009</UserSecretsId>
+      <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
     <ItemGroup>
@@ -24,6 +25,12 @@
       <ProjectReference Include="..\PaymentsService.Application\PaymentsService.Application.csproj" />
       <ProjectReference Include="..\PaymentsService.Domain\PaymentsService.Domain.csproj" />
       <ProjectReference Include="..\PaymentsService.Infrastructure\PaymentsService.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>
