@@ -77,6 +77,21 @@ services:
       - coursesdb
     networks:
       - backend
+        
+  # DB for payments service
+  paymentsdb:
+    container_name: paymentsdb
+    environment:
+      POSTGRES_DB: paymentsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5436:5432"
+    restart: always
+    volumes:
+      - payments_data:/var/lib/postgresql/data
+    networks:
+      - backend
 
 volumes:
   auth_data:
