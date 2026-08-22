@@ -7,7 +7,8 @@ namespace PaymentsService.Domain.Entities;
 public class Payment : AggregateRoot
 {
     public Guid UserId { get; private set; }
-    public Guid CourseId { get; private set; }
+    public Guid? CourseId { get; private set; }
+    public ProductType ProductType { get; private set; }
     public Money Amount { get; private set; } = null!;
     public string ReferenceNumber { get; private set; } = string.Empty;
     public PaymentStatus Status { get; private set; }
@@ -17,13 +18,13 @@ public class Payment : AggregateRoot
     
     private Payment() { }
 
-    public static Payment Create(Guid userId, Guid courseId, Money amount)
+    public static Payment Create(Guid userId, Guid? courseId, ProductType productType, Money amount)
     {
         if (userId == Guid.Empty)
             throw new PaymentsDomainException("User ID cannot be empty.");
 
-        if (courseId == Guid.Empty)
-            throw new PaymentsDomainException("Course ID cannot be empty.");
+        if (productType == ProductType.Course && (courseId == null || courseId == Guid.Empty))
+            throw new PaymentsDomainException("Course ID is required when buying a course.");
 
         if (amount.IsZero())
             throw new PaymentsDomainException("Payment amount cannot be zero.");
@@ -33,6 +34,7 @@ public class Payment : AggregateRoot
             Id = Guid.NewGuid(),
             UserId = userId,
             CourseId = courseId,
+            ProductType = productType,
             Amount = amount,
             ReferenceNumber = GenerateReferenceNumber(),
             Status = PaymentStatus.Pending,

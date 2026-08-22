@@ -1,5 +1,6 @@
 ﻿using PaymentsService.Application.Interfaces;
 using PaymentsService.Domain.Entities;
+using PaymentsService.Domain.Enums;
 using PaymentsService.Domain.Exceptions;
 using PaymentsService.Domain.ValueObjects;
 
@@ -29,18 +30,21 @@ public class CreatePaymentHandler
 
     public async Task<CreatePaymentResult> Handle(CreatePaymentCommand command)
     {
-        var existing = await _repository.GetActivePendingForUserAndCourseAsync(command.UserId, command.CouseId);
+        var existing = await _repository.GetActivePendingAsync(command.UserId, command.CourseId, command.ProductType);
         if (existing != null)
             throw new PaymentsDomainException(
                 $"Active payment already in pending for this course (reference: {existing.ReferenceNumber})");
 
         var amount = new Money(command.Amount, command.Currency);
-        var payment = Payment.Create(command.UserId, command.CouseId, amount);
+        var payment = Payment.Create(command.UserId, command.CourseId, command.ProductType, amount);
         
         await _repository.AddAsync(payment);
         await _repository.SaveChangesAsync();
 
-        const string purpose = "Uplata kursa - Espanol con Vagabundos";
+        var purpose = command.ProductType == ProductType.Ebook
+            ? "Uplata e-knjige - Español con Vagabundos"
+            : "Uplata kursa - Español con Vagabundos";
+
 
         var qrImage = _qrCodeGenerator.GenerateIpsQrCode(
             receiverAccount: ReceiverAccount,

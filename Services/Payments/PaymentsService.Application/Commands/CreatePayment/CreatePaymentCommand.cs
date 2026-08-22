@@ -1,9 +1,12 @@
-﻿namespace PaymentsService.Application.Commands.CreatePayment;
+﻿using PaymentsService.Domain.Enums;
+
+namespace PaymentsService.Application.Commands.CreatePayment;
 
 public record CreatePaymentCommand(
     Guid UserId,
     string PayerName,
-    Guid CouseId,
+    Guid? CourseId,
+    ProductType ProductType,
     decimal Amount,
     string Currency);
     

@@ -16,6 +16,7 @@ using PaymentsService.Infrastructure.Documents;
 using PaymentsService.Infrastructure.Qr;
 using PaymentsService.Infrastructure.Repository;
 using QuestPDF.Infrastructure;
+using System.Text.Json.Serialization;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -62,7 +63,12 @@ builder.Services.AddScoped<GetPaymentsByUserHandler>();
 builder.Services.AddScoped<GetPaymentsByCourseHandler>();
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>

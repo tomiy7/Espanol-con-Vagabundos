@@ -37,9 +37,10 @@ public class PaymentRepository : RepositoryBase<Payment>, IPaymentRepository
     public async Task<List<Payment>> GetByCourseIdAsync(Guid courseId) =>
         await _db.Payments.Where(p => p.CourseId == courseId).ToListAsync();
 
-    public async Task<Payment?> GetActivePendingForUserAndCourseAsync(Guid userId, Guid courseId) =>
+    public async Task<Payment?> GetActivePendingAsync(Guid userId, Guid? courseId, ProductType productType) =>
         await _db.Payments.FirstOrDefaultAsync(p =>
             p.UserId == userId &&
             p.CourseId == courseId &&
+            p.ProductType == productType &&
             p.Status == PaymentStatus.Pending);
 }

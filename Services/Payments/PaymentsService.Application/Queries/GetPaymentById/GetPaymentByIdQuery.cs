@@ -7,7 +7,8 @@ public record GetPaymentByIdQuery(Guid PaymentId);
 public record PaymentDetailDto(
     Guid Id,
     Guid UserId,
-    Guid CourseId,
+    Guid? CourseId,
+    string ProductType,
     decimal Amount,
     string Currency,
     string ReferenceNumber,
@@ -33,6 +34,7 @@ public class GetPaymentByIdHandler
             payment.Id,
             payment.UserId,
             payment.CourseId,
+            payment.ProductType.ToString(),
             payment.Amount.Amount,
             payment.Amount.Currency,
             payment.ReferenceNumber,

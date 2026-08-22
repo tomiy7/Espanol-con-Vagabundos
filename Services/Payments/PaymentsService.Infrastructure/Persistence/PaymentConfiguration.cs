@@ -13,7 +13,13 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.Property(p => p.Id).HasColumnName("id");
         builder.Property(p => p.UserId).HasColumnName("user_id").IsRequired();
-        builder.Property(p => p.CourseId).HasColumnName("course_id").IsRequired();
+        builder.Property(p => p.CourseId).HasColumnName("course_id");
+        
+        builder.Property(p => p.ProductType)
+            .HasColumnName("product_type")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
 
         builder.Property(p => p.ReferenceNumber)
             .HasColumnName("reference_number")

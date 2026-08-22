@@ -66,7 +66,7 @@ public class PaymentsController : ControllerBase
         try
         {
             var result = await _createPayment.Handle(new CreatePaymentCommand(
-                userId, request.PayerName, request.CourseId, request.Amount, request.Currency));
+                userId, request.PayerName, request.CourseId, request.ProductType, request.Amount, request.Currency));
             
             _logger.LogInformation(
                 "Payment created: {PaymentId}, reference {ReferenceNumber}, user {UserId}",

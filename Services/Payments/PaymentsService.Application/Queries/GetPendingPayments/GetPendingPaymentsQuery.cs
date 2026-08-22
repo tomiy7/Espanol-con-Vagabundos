@@ -7,7 +7,8 @@ public record GetPendingPaymentsQuery;
 public record PendingPaymentDto(
     Guid Id,
     Guid UserId,
-    Guid CourseId,
+    Guid? CourseId,
+    string ProductType,
     decimal Amount,
     string Currency,
     string ReferenceNumber,
@@ -31,6 +32,7 @@ public class GetPendingPaymentsHandler
             p.Id,
             p.UserId,
             p.CourseId,
+            p.ProductType.ToString(),
             p.Amount.Amount,
             p.Amount.Currency,
             p.ReferenceNumber,

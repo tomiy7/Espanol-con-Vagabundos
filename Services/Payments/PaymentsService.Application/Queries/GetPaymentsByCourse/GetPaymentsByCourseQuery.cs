@@ -8,6 +8,7 @@ public record GetPaymentsByCourseQuery(Guid CourseId);
 public record PaymentByCourseDto(
     Guid Id,
     Guid UserId,
+    string ProductType,
     decimal Amount,
     string Currency,
     string ReferenceNumber,
@@ -33,6 +34,7 @@ public class GetPaymentsByCourseHandler
             .Select(p => new PaymentByCourseDto(
                 p.Id,
                 p.UserId,
+                p.ProductType.ToString(),
                 p.Amount.Amount,
                 p.Amount.Currency,
                 p.ReferenceNumber,
