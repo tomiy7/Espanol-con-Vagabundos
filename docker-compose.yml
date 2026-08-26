@@ -2,25 +2,31 @@ services:
   
   authdb:
     image: postgres:16
-    
+  
   auth.api:
     image: auth.api
     build:
       context: .
       dockerfile: Services/Auth/AuthService.API/Dockerfile
-    
+  
   coursesdb:
     image: postgres:16
-    
+  
   courses.api:
     image: courses.api
-    build: 
+    build:
       context: .
       dockerfile: Services/Courses/CoursesService.API/Dockerfile
-      
+  
   paymentsdb:
     image: postgres:16
-    
+
+  payments.api:
+    image: payments.api
+    build:
+      context: .
+      dockerfile: Services/Payments/PaymentsService.API/Dockerfile
+  
   directus:
     image: directus/directus:latest
 
@@ -28,7 +34,7 @@ volumes:
   auth_data:
   courses_data:
   payments_data:
-    
+
 networks:
   backend:
     driver: bridge

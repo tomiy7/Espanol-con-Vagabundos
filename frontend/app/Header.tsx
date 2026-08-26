@@ -18,12 +18,12 @@ export default function Header() {
     }
 
     return (
-        <header className="w-full border-b border-zinc-200 dark:border-zinc-800">
-            <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+        <header className="w-full bg-[#d8c6ff]">
+            <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
 
                 <Link
                     href="/"
-                    className="font-semibold text-lg text-black dark:text-zinc-50"
+                    className="text-lg font-semibold text-zinc-900"
                 >
                     Español con Vagabundos
                 </Link>
@@ -32,7 +32,7 @@ export default function Header() {
 
                     <Link
                         href="/courses"
-                        className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50"
+                        className="text-zinc-700 transition hover:text-zinc-950"
                     >
                         Kursevi
                     </Link>
@@ -41,20 +41,24 @@ export default function Header() {
                         <div className="relative">
 
                             <button
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50"
+                                onClick={() =>
+                                    setIsMenuOpen(!isMenuOpen)
+                                }
+                                className="flex items-center gap-2 text-zinc-700 transition hover:text-zinc-950"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     fill="currentColor"
                                     viewBox="0 0 24 24"
-                                    className="w-5 h-5 text-zinc-500"
+                                    className="h-5 w-5"
                                 >
                                     <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5.33 0-8 2.67-8 6v2h16v-2c0-3.33-2.67-6-8-6Z" />
                                 </svg>
 
                                 <span>
-                                    {user?.firstName || user?.username || "Moj nalog"}
+                                    {user?.firstName ||
+                                        user?.username ||
+                                        "Moj nalog"}
                                 </span>
 
                                 <span className="text-xs">
@@ -63,21 +67,23 @@ export default function Header() {
                             </button>
 
                             {isMenuOpen && (
-                                <div className="absolute right-0 top-full mt-3 w-44 rounded-md border border-zinc-200 bg-white shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+                                <div className="absolute right-0 top-full z-50 mt-3 w-44 rounded-xl border border-[#d8c6ff] bg-white shadow-lg">
 
                                     <Link
                                         href="/my-account"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="block px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                        onClick={() =>
+                                            setIsMenuOpen(false)
+                                        }
+                                        className="block px-4 py-3 text-sm text-zinc-700 transition hover:bg-[#fff3c2]"
                                     >
                                         Moj nalog
                                     </Link>
 
-                                    <div className="border-t border-zinc-200 dark:border-zinc-700" />
+                                    <div className="border-t border-zinc-100" />
 
                                     <button
                                         onClick={handleLogout}
-                                        className="block w-full px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                        className="block w-full px-4 py-3 text-left text-sm text-zinc-700 transition hover:bg-[#fff3c2]"
                                     >
                                         Odjavi se
                                     </button>
@@ -89,14 +95,14 @@ export default function Header() {
                         <>
                             <Link
                                 href="/login"
-                                className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50"
+                                className="text-zinc-700 transition hover:text-zinc-950"
                             >
                                 Prijava
                             </Link>
 
                             <Link
                                 href="/register"
-                                className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-50"
+                                className="text-zinc-700 transition hover:text-zinc-950"
                             >
                                 Registracija
                             </Link>

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type ListItem = {
   content: string;
   items: ListItem[];
@@ -25,20 +27,34 @@ type Homepage = {
 };
 
 async function getHomepage(): Promise<Homepage> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/homepage`, {
-    cache: "no-store",
-  });
+  const res = await fetch(
+      `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/homepage`,
+      {
+        cache: "no-store",
+      }
+  );
+
   const json = await res.json();
   return json.data;
 }
 
 function renderNestedList(items: ListItem[]) {
   return (
-      <ul className="list-disc ml-5 mb-4">
+      <ul className="mt-4 space-y-2">
         {items.map((item, i) => (
-            <li key={i}>
-              {item.content}
-              {item.items && item.items.length > 0 && renderNestedList(item.items)}
+            <li
+                key={i}
+                className="flex gap-3 text-[16px] leading-7 text-zinc-700"
+            >
+              <span className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-[#fff3c2]" />
+
+              <div>
+                {item.content}
+
+                {item.items &&
+                    item.items.length > 0 &&
+                    renderNestedList(item.items)}
+              </div>
             </li>
         ))}
       </ul>
@@ -48,143 +64,260 @@ function renderNestedList(items: ListItem[]) {
 function renderContent(content: Homepage["content"]) {
   if (!content || !content.blocks) return null;
 
-  return content.blocks.map((block, i) => {
+  const blocks = content.blocks;
+  const renderedBlocks = [];
+
+  let personIndex = 0;
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    const nextBlock = blocks[i + 1];
+
+    /*
+      PERSON SECTION
+
+      Ako imamo paragraph + image ili image + paragraph,
+      spajamo ih u jedan red.
+    */
+
+    const isParagraphThenImage =
+        block.type === "paragraph" &&
+        nextBlock?.type === "image" &&
+        nextBlock.data.file;
+
+    const isImageThenParagraph =
+        block.type === "image" &&
+        block.data.file &&
+        nextBlock?.type === "paragraph";
+
+    if (isParagraphThenImage || isImageThenParagraph) {
+      const isEven = personIndex % 2 === 0;
+
+      const imageBlock =
+          block.type === "image" ? block : nextBlock;
+
+      const textBlock =
+          block.type === "paragraph" ? block : nextBlock;
+
+      const image = (
+          <div className="flex w-full justify-center md:w-[220px]">
+            <img
+                src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${imageBlock.data.file?.fileId}`}
+                alt={imageBlock.data.caption || ""}
+                className="h-32 w-32 shrink-0 rounded-full object-cover shadow-md md:h-40 md:w-40"
+            />
+          </div>
+      );
+
+      const text = (
+          <div className="flex-1">
+            <p
+                className="text-[16px] leading-8 text-zinc-600"
+                dangerouslySetInnerHTML={{
+                  __html: textBlock.data.text || "",
+                }}
+            />
+          </div>
+      );
+
+      renderedBlocks.push(
+          <div
+              key={`person-${i}`}
+              className="my-14 flex flex-col items-center gap-8 md:flex-row md:items-center md:gap-12"
+          >
+            {isEven ? (
+                <>
+                  {image}
+                  {text}
+                </>
+            ) : (
+                <>
+                  {text}
+                  {image}
+                </>
+            )}
+          </div>
+      );
+
+      personIndex++;
+
+      /*
+        Preskačemo sledeći blok jer smo ga već prikazali
+      */
+      i++;
+
+      continue;
+    }
+
+    /*
+      PARAGRAPH
+    */
+
     if (block.type === "paragraph") {
-      return (
+      renderedBlocks.push(
           <p
               key={i}
-              className="mb-4"
-              dangerouslySetInnerHTML={{ __html: block.data.text || "" }}
+              className="mb-5 text-[16px] leading-8 text-zinc-600"
+              dangerouslySetInnerHTML={{
+                __html: block.data.text || "",
+              }}
           />
       );
+
+      continue;
     }
+
+    /*
+      HEADER
+    */
+
     if (block.type === "header") {
-      return (
-          <h2 key={i} className="text-2xl font-medium mb-3 mt-6">
-            {block.data.text}
-          </h2>
+      renderedBlocks.push(
+          <div key={i} className="mt-12 mb-5">
+            <h2 className="inline-block rounded-full bg-[#fff3c2] px-5 py-2 text-xl font-semibold text-zinc-900">
+              {block.data.text}
+            </h2>
+          </div>
       );
+
+      continue;
     }
-    if (block.type === "list" && Array.isArray(block.data.items)) {
-      return (
-          <ul key={i} className="list-disc ml-5 mb-4">
+
+    /*
+      LIST
+    */
+
+    if (
+        block.type === "list" &&
+        Array.isArray(block.data.items)
+    ) {
+      renderedBlocks.push(
+          <ul key={i} className="mb-6 space-y-2">
             {(block.data.items as string[]).map((item, j) => (
-                <li key={j}>{item}</li>
+                <li
+                    key={j}
+                    className="flex gap-3 text-[16px] leading-7 text-zinc-700"
+                >
+                  <span className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-[#fff3c2]" />
+
+                  <span>{item}</span>
+                </li>
             ))}
           </ul>
       );
+
+      continue;
     }
-    if (block.type === "nestedlist" && Array.isArray(block.data.items)) {
-      return (
-          <div key={i} className="mb-4">
-            {renderNestedList(block.data.items as ListItem[])}
+
+    /*
+      NESTED LIST
+    */
+
+    if (
+        block.type === "nestedlist" &&
+        Array.isArray(block.data.items)
+    ) {
+      renderedBlocks.push(
+          <div key={i} className="mb-6">
+            {renderNestedList(
+                block.data.items as ListItem[]
+            )}
           </div>
       );
+
+      continue;
     }
-    if (block.type === "image" && block.data.file) {
-      return (
-          <figure key={i} className="mb-6">
+
+    /*
+      IMAGE KOJA NIJE DEO PERSON SECTION-A
+    */
+
+    if (
+        block.type === "image" &&
+        block.data.file
+    ) {
+      renderedBlocks.push(
+          <figure
+              key={i}
+              className="my-10 flex justify-center"
+          >
             <img
                 src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${block.data.file.fileId}`}
                 alt={block.data.caption || ""}
-                className="rounded-full w-48 h-48 object-cover mx-auto"
+                className="max-h-[450px] rounded-3xl object-cover shadow-md"
             />
+
             {block.data.caption && (
-                <figcaption className="text-center text-sm text-zinc-500 mt-2">
+                <figcaption className="mt-3 text-center text-sm text-zinc-500">
                   {block.data.caption}
                 </figcaption>
             )}
           </figure>
       );
     }
-    return null;
-  });
+  }
+
+  return renderedBlocks;
 }
 
 export default async function Home() {
   const homepage = await getHomepage();
 
   return (
-      <div className="flex flex-col flex-1 bg-zinc-50 dark:bg-black">
-        <section className="flex flex-col items-center text-center px-6 py-24">
-          {homepage.hero_image && (
-              <img
-                  src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${homepage.hero_image}`}
-                  alt={homepage.hero_title}
-                  className="w-full max-w-md rounded-md mb-8"
-              />
-          )}
-          <h1 className="text-4xl font-semibold mb-4 text-black dark:text-zinc-50">
-            {homepage.hero_title}
-          </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 max-w-xl">
-            {homepage.hero_subtitle}
-          </p>
+      <div className="flex flex-1 flex-col bg-white">
+
+        {/* HERO */}
+
+        <section className="w-full bg-[#bdebff]">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-6 py-16 md:flex-row md:py-20">
+
+            {/* TEXT */}
+
+            <div className="flex-1 text-center md:text-left">
+            <span className="mb-5 inline-block rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-zinc-700">
+              Aprende español con nosotros
+            </span>
+
+              <h1 className="mb-6 text-4xl font-semibold leading-tight text-zinc-900 md:text-6xl">
+                {homepage.hero_title}
+              </h1>
+
+              <p className="mb-7 max-w-xl text-lg leading-8 text-zinc-700">
+                {homepage.hero_subtitle}
+              </p>
+
+              <Link
+                  href="/courses"
+                  className="inline-flex items-center gap-3 rounded-full bg-[#d8c6ff] px-6 py-3 font-medium text-zinc-900 transition hover:scale-[1.02] hover:shadow-md"
+              >
+                Istraži kurseve
+                <span>→</span>
+              </Link>
+            </div>
+
+            {/* HERO IMAGE */}
+
+            {homepage.hero_image && (
+                <div className="flex flex-1 justify-center">
+                  <img
+                      src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${homepage.hero_image}`}
+                      alt={homepage.hero_title}
+                      className="aspect-square w-full max-w-[500px] rounded-full object-cover shadow-lg"
+                  />
+                </div>
+            )}
+
+          </div>
         </section>
 
-        <section className="w-full max-w-2xl mx-auto px-6 py-12 text-zinc-700 dark:text-zinc-300">
-          {renderContent(homepage.content)}
+        {/* CONTENT */}
+
+        <section className="mx-auto w-full max-w-6xl px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-5xl">
+            {renderContent(homepage.content)}
+          </div>
         </section>
+
       </div>
   );
 }
-
-// import Link from "next/link";
-//
-// type Course = {
-//   id: number;
-//   title: string;
-//   description: string;
-//   price: string;
-//   thumbnail: string;
-// };
-//
-// async function getCourses(): Promise<Course[]> {
-//   const res = await fetch(`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/courses`, {
-//     cache: "no-store",
-//   });
-//   const json = await res.json();
-//   return json.data;
-// }
-//
-// export default async function Home() {
-//   const courses = await getCourses();
-//
-//   return (
-//       <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
-//         <main className="w-full max-w-3xl py-16 px-6">
-//           <h1 className="text-3xl font-semibold mb-8 text-black dark:text-zinc-50">
-//             Svi naši kursevi
-//           </h1>
-//
-//           <div className="flex flex-col gap-4">
-//             {courses.map((course) => (
-//                 <Link
-//                     key={course.id}
-//                     href={`/courses/${course.id}`}
-//                     className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
-//                 >
-//                   {course.thumbnail && (
-//                       <img
-//                           src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${course.thumbnail}`}
-//                           alt={course.title}
-//                           className="w-full rounded-md mb-4"
-//                           // className="w-full max-w-xs rounded-md mb-4 mx-auto"
-//                       />
-//                   )}
-//                   <h2 className="text-xl font-medium text-black dark:text-zinc-50">
-//                     {course.title}
-//                   </h2>
-//                   <p className="text-zinc-600 dark:text-zinc-400 mt-2">
-//                     {course.description}
-//                   </p>
-//                   <p className="text-zinc-950 dark:text-zinc-50 font-medium mt-4">
-//                     {course.price} €
-//                   </p>
-//                 </Link>
-//             ))}
-//           </div>
-//         </main>
-//       </div>
-//   );
-// }

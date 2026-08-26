@@ -17,7 +17,7 @@ namespace AuthService.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -57,7 +57,7 @@ namespace AuthService.API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("refresh_tokens");
+                    b.ToTable("refresh_tokens", (string)null);
                 });
 
             modelBuilder.Entity("AuthService.API.Entities.User", b =>
@@ -66,6 +66,12 @@ namespace AuthService.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("approval_status");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -125,8 +131,10 @@ namespace AuthService.API.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("users", t =>
+                    b.ToTable("users", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Users_ApprovalStatus", "approval_status IN ('none', 'pending', 'approved', 'rejected')");
+
                             t.HasCheckConstraint("CK_Users_Role", "role IN ('student', 'professor', 'admin')");
                         });
                 });
