@@ -7,16 +7,52 @@ import { useAuth } from "../src/hooks/useAuth";
 
 export default function Header() {
     const router = useRouter();
-    const { user, isAuthenticated, loading, logout } = useAuth();
 
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const {
+        user,
+        isAuthenticated,
+        loading,
+        logout
+    } = useAuth();
+
+    const [isMenuOpen, setIsMenuOpen] =
+        useState(false);
 
     function handleLogout() {
         logout();
+
         setIsMenuOpen(false);
+
         router.push("/");
     }
 
+    function getVagabundoName() {
+        const name =
+            user?.firstName ||
+            user?.username ||
+            "Moj nalog";
+
+        const gender = user?.gender?.trim().toLowerCase();
+
+        if (
+            gender === "female" ||
+            gender === "žensko" ||
+            gender === "zensko"
+        ) {
+            return `Vagabunda ${name}`;
+        }
+
+        if (
+            gender === "male" ||
+            gender === "muško" ||
+            gender === "musko"
+        ) {
+            return `Vagabundo ${name}`;
+        }
+
+        return name;
+    }
+    
     return (
         <header className="w-full bg-[#d8c6ff]">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -56,9 +92,7 @@ export default function Header() {
                                 </svg>
 
                                 <span>
-                                    {user?.firstName ||
-                                        user?.username ||
-                                        "Moj nalog"}
+                                    {getVagabundoName()}
                                 </span>
 
                                 <span className="text-xs">
@@ -67,7 +101,7 @@ export default function Header() {
                             </button>
 
                             {isMenuOpen && (
-                                <div className="absolute right-0 top-full z-50 mt-3 w-44 rounded-xl border border-[#d8c6ff] bg-white shadow-lg">
+                                <div className="absolute right-0 top-full z-50 mt-3 w-52 rounded-xl border border-[#d8c6ff] bg-white shadow-lg">
 
                                     <Link
                                         href="/my-account"

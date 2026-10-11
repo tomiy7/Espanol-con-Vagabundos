@@ -57,7 +57,7 @@ namespace AuthService.API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("refresh_tokens", (string)null);
+                    b.ToTable("refresh_tokens");
                 });
 
             modelBuilder.Entity("AuthService.API.Entities.User", b =>
@@ -66,12 +66,6 @@ namespace AuthService.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    b.Property<string>("ApprovalStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("approval_status");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -88,6 +82,12 @@ namespace AuthService.API.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("first_name");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("gender");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -131,10 +131,8 @@ namespace AuthService.API.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("users", null, t =>
+                    b.ToTable("users", t =>
                         {
-                            t.HasCheckConstraint("CK_Users_ApprovalStatus", "approval_status IN ('none', 'pending', 'approved', 'rejected')");
-
                             t.HasCheckConstraint("CK_Users_Role", "role IN ('student', 'professor', 'admin')");
                         });
                 });

@@ -11,6 +11,7 @@ type User = {
     role: string;
     firstName?: string;
     lastName?: string;
+    gender?: string;
     createdAt: string;
 };
 
@@ -46,6 +47,9 @@ export default function MyAccountPage() {
                 }
 
                 const data = await res.json();
+
+                console.log("USER FROM /auth/me:", data);
+
                 setUser(data);
             } catch {
                 setError("Greška pri povezivanju sa serverom.");
@@ -56,6 +60,33 @@ export default function MyAccountPage() {
 
         getUser();
     }, [router]);
+
+    function getVagabundoName() {
+        const name =
+            user?.firstName ||
+            user?.username ||
+            "korisniče";
+
+        const gender = user?.gender?.trim().toLowerCase();
+
+        if (
+            gender === "female" ||
+            gender === "žensko" ||
+            gender === "zensko"
+        ) {
+            return `Vagabunda ${name}`;
+        }
+
+        if (
+            gender === "male" ||
+            gender === "muško" ||
+            gender === "musko"
+        ) {
+            return `Vagabundo ${name}`;
+        }
+
+        return name;
+    }
 
     function handleLogout() {
         localStorage.removeItem("accessToken");
@@ -94,7 +125,7 @@ export default function MyAccountPage() {
                     </span>
 
                     <h1 className="mb-3 text-4xl font-semibold text-zinc-900">
-                        Zdravo, {user?.firstName || user?.username}! 👋
+                        Zdravo, {getVagabundoName()}! 👋
                     </h1>
 
                     <p className="text-zinc-700">
@@ -103,7 +134,6 @@ export default function MyAccountPage() {
 
                 </div>
             </section>
-
 
             {/* CONTENT */}
             <main className="mx-auto w-full max-w-6xl px-6 py-16">
@@ -134,7 +164,6 @@ export default function MyAccountPage() {
 
                             </div>
 
-
                             <div className="flex flex-col gap-4">
 
                                 <div className="rounded-2xl bg-zinc-50 p-4">
@@ -147,7 +176,6 @@ export default function MyAccountPage() {
                                     </p>
                                 </div>
 
-
                                 <div className="rounded-2xl bg-zinc-50 p-4">
                                     <p className="mb-1 text-xs font-medium text-zinc-400">
                                         EMAIL
@@ -157,7 +185,6 @@ export default function MyAccountPage() {
                                         {user.email}
                                     </p>
                                 </div>
-
 
                                 {(user.firstName || user.lastName) && (
                                     <div className="rounded-2xl bg-zinc-50 p-4">
@@ -171,6 +198,21 @@ export default function MyAccountPage() {
                                     </div>
                                 )}
 
+                                {user.gender && (
+                                    <div className="rounded-2xl bg-zinc-50 p-4">
+                                        <p className="mb-1 text-xs font-medium text-zinc-400">
+                                            POL
+                                        </p>
+
+                                        <p className="font-medium text-zinc-800">
+                                            {user.gender.toLowerCase() === "female"
+                                                ? "Žensko"
+                                                : user.gender.toLowerCase() === "male"
+                                                    ? "Muško"
+                                                    : user.gender}
+                                        </p>
+                                    </div>
+                                )}
 
                                 {user.phone && (
                                     <div className="rounded-2xl bg-zinc-50 p-4">
@@ -189,7 +231,6 @@ export default function MyAccountPage() {
                         </section>
                     )}
 
-
                     {/* MY COURSES */}
                     <section className="rounded-3xl bg-[#fff3c2] p-8">
 
@@ -204,7 +245,6 @@ export default function MyAccountPage() {
                         <p className="mb-6 text-zinc-700">
                             Ovde će se prikazivati svi kursevi koje si kupila i kojima imaš pristup.
                         </p>
-
 
                         {/* EMPTY STATE */}
                         <div className="rounded-3xl bg-white/80 p-6">
@@ -234,9 +274,7 @@ export default function MyAccountPage() {
 
                 </div>
 
-
                 {/* LOGOUT */}
-
                 <div className="mt-12 border-t border-zinc-200 pt-8">
 
                     <button
