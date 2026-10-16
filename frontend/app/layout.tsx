@@ -1,33 +1,41 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "./Header";
 import Footer from "./Footer";
 
-const poppins = Poppins({
-    variable: "--font-poppins",
+const geistSans = Geist({
+    variable: "--font-geist-sans",
     subsets: ["latin"],
-    weight: ["400", "500", "600", "700"],
+});
+
+const geistMono = Geist_Mono({
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-    title: "Español con Vagabundos",
-    description: "Naučite španski uz pravo iskustvo",
+    title: {
+        // Pocetna (i sve strane bez svog naslova)
+        default: "Español con Vagabundos",
+        // Ostale strane: "Prijava | Español con Vagabundos"
+        template: "%s | Español con Vagabundos",
+    },
+    description: "Español con Vagabundos – kursevi španskog jezika",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+                                       children,
+                                   }: Readonly<{
+    children: React.ReactNode;
+}>) {
     return (
-        <html
-            lang="sr"
-            className={`${poppins.variable} h-full`}
+        <html lang="sr">
+        <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-        <body className="min-h-full flex flex-col">
         <Header />
-
-        <div className="flex flex-col flex-1">
-            {children}
-        </div>
-
+        {children}
         <Footer />
         </body>
         </html>
