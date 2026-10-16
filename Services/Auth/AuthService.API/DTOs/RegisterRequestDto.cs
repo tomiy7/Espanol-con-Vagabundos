@@ -4,11 +4,12 @@ namespace AuthService.API.DTOs;
 
 public class RegisterRequestDto
 {
-    [Required, MinLength(3), MaxLength(50)]
+    [Required, MinLength(3), MaxLength(30)]
     [RegularExpression("^[a-zA-Z0-9_]+$")]
     public string Username { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Email is required")]
+    [MaxLength(254, ErrorMessage = "Email must have at most 254 characters")]
     [EmailAddress(ErrorMessage = "Email is in invalid format")]
     public string Email { get; set; } = string.Empty;
 
@@ -21,6 +22,10 @@ public class RegisterRequestDto
 
     [Required]
     [MinLength(8, ErrorMessage = "Password must have at least 8 characters")]
+    [RegularExpression(
+        @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$",
+        ErrorMessage = "Password must contain an uppercase letter, a lowercase letter, a number and a special character"
+    )]
     public string Password { get; set; } = string.Empty;
 
     [Required]

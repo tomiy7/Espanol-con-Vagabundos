@@ -45,21 +45,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RegisterAsync(
         RegisterRequestDto registerRequestDto)
     {
-        if (await _userRepository.EmailExistsAsync(
-                registerRequestDto.Email))
-        {
-            _logger.LogWarning(
-                "Registration failed: email {Email} alredy exists",
-                registerRequestDto.Email
-            );
-
-            return Conflict(new ErrorResponseDto
-            {
-                Error = AuthErrorCodes.EmailExists,
-                Message = "Email already exists"
-            });
-        }
-
+        // Prioritet provera: prvo korisnicko ime, pa email
         if (await _userRepository.UsernameExistsAsync(
                 registerRequestDto.Username))
         {
@@ -72,6 +58,21 @@ public class AuthController : ControllerBase
             {
                 Error = AuthErrorCodes.UsernameExists,
                 Message = "Username already exists"
+            });
+        }
+
+        if (await _userRepository.EmailExistsAsync(
+                registerRequestDto.Email))
+        {
+            _logger.LogWarning(
+                "Registration failed: email {Email} alredy exists",
+                registerRequestDto.Email
+            );
+
+            return Conflict(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.EmailExists,
+                Message = "Email already exists"
             });
         }
 
@@ -105,6 +106,44 @@ public class AuthController : ControllerBase
             StatusCodes.Status201Created,
             tokens
         );
+    }
+
+    [HttpGet("check-username")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CheckUsernameAsync(
+        [FromQuery] string? username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return BadRequest();
+        }
+
+        var exists = await _userRepository.UsernameExistsAsync(
+            username.Trim()
+        );
+
+        return Ok(new { available = !exists });
+    }
+
+    [HttpGet("check-email")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CheckEmailAsync(
+        [FromQuery] string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest();
+        }
+
+        var exists = await _userRepository.EmailExistsAsync(
+            email.Trim()
+        );
+
+        return Ok(new { available = !exists });
     }
 
     [HttpPost("login")]

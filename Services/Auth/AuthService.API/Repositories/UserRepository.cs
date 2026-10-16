@@ -31,10 +31,10 @@ public class UserRepository : IUserRepository
         await _dbContext.Users.ToListAsync();
 
     public async Task<bool> EmailExistsAsync(string email) =>
-        await _dbContext.Users.AnyAsync(x => x.Email == email);
+        await _dbContext.Users.AnyAsync(x => x.Email.ToLower() == email.ToLower());
 
     public async Task<bool> UsernameExistsAsync(string username) =>
-        await _dbContext.Users.AnyAsync(x => x.Username == username);
+        await _dbContext.Users.AnyAsync(x => x.Username.ToLower() == username.ToLower());
 
     public async Task AddUserAsync(User user) =>
         await _dbContext.Users.AddAsync(user);

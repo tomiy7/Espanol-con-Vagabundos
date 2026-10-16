@@ -4,6 +4,94 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+type FieldName =
+    | "username"
+    | "email"
+    | "password"
+    | "confirmPassword"
+    | "phone"
+    | "firstName"
+    | "lastName"
+    | "gender";
+
+async function isAvailable(
+    kind: "username" | "email",
+    value: string
+): Promise<boolean> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_AUTH_URL}/auth/check-${kind}?${kind}=${encodeURIComponent(value)}`
+    );
+
+    if (!res.ok) {
+        throw new Error("Availability check failed");
+    }
+
+    const data = await res.json();
+
+    return data.available === true;
+}
+
+function getPasswordProblems(password: string): string[] {
+    const problems: string[] = [];
+
+    if (password.length < 8) {
+        problems.push("najmanje 8 karaktera");
+    }
+
+    if (!/[a-z]/.test(password)) {
+        problems.push("malo slovo");
+    }
+
+    if (!/[A-Z]/.test(password)) {
+        problems.push("veliko slovo");
+    }
+
+    if (!/\d/.test(password)) {
+        problems.push("broj");
+    }
+
+    if (!/[^A-Za-z0-9\s]/.test(password)) {
+        problems.push("specijalni karakter (npr. ! ? # $ %)");
+    }
+
+    return problems;
+}
+
+function FieldError({
+                        id,
+                        message,
+                    }: {
+    id: string;
+    message?: string;
+}) {
+    if (!message) {
+        return null;
+    }
+
+    return (
+        <p
+            id={id}
+            role="alert"
+            className="flex items-start gap-1.5 text-sm text-red-600"
+        >
+            <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="mt-0.5 h-4 w-4 shrink-0"
+            >
+                <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 6a1 1 0 112 0v4a1 1 0 11-2 0V6zm1 8a1 1 0 100-2 1 1 0 000 2z"
+                    clipRule="evenodd"
+                />
+            </svg>
+
+            <span>{message}</span>
+        </p>
+    );
+}
+
 export default function RegisterPage() {
     const router = useRouter();
 
@@ -18,8 +106,43 @@ export default function RegisterPage() {
         gender: "",
     });
 
-    const [error, setError] = useState("");
+    // Greška vezana za jedno polje (prikazuje se ispod tog polja)
+    const [fieldError, setFieldError] = useState<{
+        field: FieldName;
+        message: string;
+    } | null>(null);
+
+    // Opšta greška (server ne radi, nepoznata greška...)
+    const [formError, setFormError] = useState("");
+
     const [loading, setLoading] = useState(false);
+
+    const baseInput =
+        "rounded-2xl border px-4 py-3 text-zinc-900 outline-none transition focus:bg-white focus:ring-4";
+
+    const okInput =
+        "border-zinc-200 bg-zinc-50 focus:border-[#d8c6ff] focus:ring-[#d8c6ff]/30";
+
+    const badInput =
+        "border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-200";
+
+    function inputClass(field: FieldName) {
+        return `${baseInput} ${
+            fieldError?.field === field ? badInput : okInput
+        }`;
+    }
+
+    function errorFor(field: FieldName) {
+        return fieldError?.field === field
+            ? fieldError.message
+            : undefined;
+    }
+
+    function showFieldError(field: FieldName, message: string) {
+        setFieldError({ field, message });
+
+        document.getElementById(field)?.focus();
+    }
 
     function handleChange(
         e: React.ChangeEvent<
@@ -30,75 +153,120 @@ export default function RegisterPage() {
             ...form,
             [e.target.name]: e.target.value,
         });
+
+        if (fieldError?.field === e.target.name) {
+            setFieldError(null);
+        }
+
+        setFormError("");
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
-        setError("");
+        setFieldError(null);
+        setFormError("");
         setLoading(true);
 
-        // Username
-        if (!/^[A-Za-z0-9_]{3,50}$/.test(form.username)) {
-            setError(
-                "Korisničko ime mora imati između 3 i 50 karaktera i može sadržati samo slova, brojeve i _"
-            );
-            setLoading(false);
-            return;
-        }
-
-        // Email
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-            setError("Unesite validnu email adresu");
-            setLoading(false);
-            return;
-        }
-
-        // Telefon
-        if (!/^(06\d{8}|\+3816\d{8})$/.test(form.phone)) {
-            setError(
-                "Telefon mora biti u formatu 06XXXXXXXX ili +3816XXXXXXXX"
-            );
-            setLoading(false);
-            return;
-        }
-
-        // Lozinka
-        if (form.password.length < 8) {
-            setError("Lozinka mora imati najmanje 8 karaktera");
-            setLoading(false);
-            return;
-        }
-
-        // Potvrda lozinke
-        if (form.password !== form.confirmPassword) {
-            setError("Lozinke se ne podudaraju");
-            setLoading(false);
-            return;
-        }
-
-        // Ime
-        if (!form.firstName.trim()) {
-            setError("Ime je obavezno");
-            setLoading(false);
-            return;
-        }
-
-        // Prezime
-        if (!form.lastName.trim()) {
-            setError("Prezime je obavezno");
-            setLoading(false);
-            return;
-        }
-
-        // Pol
-        if (!form.gender) {
-            setError("Izaberite pol");
-            setLoading(false);
-            return;
-        }
+        const username = form.username.trim();
+        const email = form.email.trim();
 
         try {
+            // 1. KORISNIČKO IME (format, pa zauzetost)
+
+            if (!/^[A-Za-z0-9_]{3,30}$/.test(username)) {
+                showFieldError(
+                    "username",
+                    "Korisničko ime mora imati između 3 i 30 karaktera i može sadržati samo slova, brojeve i _"
+                );
+                return;
+            }
+
+            if (!(await isAvailable("username", username))) {
+                showFieldError(
+                    "username",
+                    "Korisničko ime je već zauzeto. Izaberi drugo."
+                );
+                return;
+            }
+
+            // 2. EMAIL (dužina, format, pa zauzetost)
+
+            if (email.length > 254) {
+                showFieldError(
+                    "email",
+                    "Email može imati najviše 254 karaktera."
+                );
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showFieldError(
+                    "email",
+                    "Unesi validnu email adresu."
+                );
+                return;
+            }
+
+            if (!(await isAvailable("email", email))) {
+                showFieldError(
+                    "email",
+                    "Email je već zauzet. Izaberi drugi ili se prijavi."
+                );
+                return;
+            }
+
+            // 3. JAČINA LOZINKE
+
+            const passwordProblems = getPasswordProblems(
+                form.password
+            );
+
+            if (passwordProblems.length > 0) {
+                showFieldError(
+                    "password",
+                    `Lozinka mora imati: ${passwordProblems.join(", ")}.`
+                );
+                return;
+            }
+
+            // 4. POTVRDA LOZINKE
+
+            if (form.password !== form.confirmPassword) {
+                showFieldError(
+                    "confirmPassword",
+                    "Lozinke se ne podudaraju."
+                );
+                return;
+            }
+
+            // 5. OSTALA POLJA
+
+            if (!/^(06\d{8}|\+3816\d{8})$/.test(form.phone)) {
+                showFieldError(
+                    "phone",
+                    "Telefon mora biti u formatu 06XXXXXXXX ili +3816XXXXXXXX."
+                );
+                return;
+            }
+
+            if (!form.firstName.trim()) {
+                showFieldError("firstName", "Ime je obavezno.");
+                return;
+            }
+
+            if (!form.lastName.trim()) {
+                showFieldError("lastName", "Prezime je obavezno.");
+                return;
+            }
+
+            if (!form.gender) {
+                showFieldError("gender", "Izaberi pol.");
+                return;
+            }
+
+            // SLANJE
+
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_AUTH_URL}/auth/register`,
                 {
@@ -107,8 +275,8 @@ export default function RegisterPage() {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        username: form.username,
-                        email: form.email,
+                        username,
+                        email,
                         phone: form.phone,
                         password: form.password,
                         confirmPassword: form.confirmPassword,
@@ -119,11 +287,42 @@ export default function RegisterPage() {
                 }
             );
 
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
 
             if (!res.ok) {
-                setError(
-                    data.message || "Greška prilikom registracije"
+                const text = String(
+                    data?.message || ""
+                ).toLowerCase();
+
+                // Neko je u međuvremenu zauzeo korisničko ime / email
+                if (res.status === 409 && text.includes("username")) {
+                    showFieldError(
+                        "username",
+                        "Korisničko ime je već zauzeto. Izaberi drugo."
+                    );
+                    return;
+                }
+
+                if (res.status === 409 && text.includes("email")) {
+                    showFieldError(
+                        "email",
+                        "Email je već zauzet. Izaberi drugi ili se prijavi."
+                    );
+                    return;
+                }
+
+                let message = data?.message;
+
+                if (!message && data?.errors) {
+                    message = Object.values(data.errors)
+                        .flat()
+                        .join(" ");
+                }
+
+                setFormError(
+                    message ||
+                    data?.title ||
+                    "Greška prilikom registracije"
                 );
                 return;
             }
@@ -144,7 +343,7 @@ export default function RegisterPage() {
 
             router.push("/");
         } catch {
-            setError("Greška pri povezivanju sa serverom");
+            setFormError("Greška pri povezivanju sa serverom. Pokušaj ponovo.");
         } finally {
             setLoading(false);
         }
@@ -201,15 +400,19 @@ export default function RegisterPage() {
                         </div>
 
 
-                        {error && (
-                            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                                {error}
+                        {formError && (
+                            <div
+                                role="alert"
+                                className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+                            >
+                                {formError}
                             </div>
                         )}
 
 
                         <form
                             onSubmit={handleSubmit}
+                            noValidate
                             className="flex flex-col gap-5"
                         >
 
@@ -235,7 +438,16 @@ export default function RegisterPage() {
                                         value={form.firstName}
                                         onChange={handleChange}
                                         required
-                                        className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                        aria-invalid={
+                                            fieldError?.field === "firstName"
+                                        }
+                                        aria-describedby="firstName-error"
+                                        className={inputClass("firstName")}
+                                    />
+
+                                    <FieldError
+                                        id="firstName-error"
+                                        message={errorFor("firstName")}
                                     />
 
                                 </div>
@@ -259,7 +471,16 @@ export default function RegisterPage() {
                                         value={form.lastName}
                                         onChange={handleChange}
                                         required
-                                        className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                        aria-invalid={
+                                            fieldError?.field === "lastName"
+                                        }
+                                        aria-describedby="lastName-error"
+                                        className={inputClass("lastName")}
+                                    />
+
+                                    <FieldError
+                                        id="lastName-error"
+                                        message={errorFor("lastName")}
                                     />
 
                                 </div>
@@ -287,26 +508,30 @@ export default function RegisterPage() {
                                     value={form.gender}
                                     onChange={handleChange}
                                     required
-                                    className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                    aria-invalid={
+                                        fieldError?.field === "gender"
+                                    }
+                                    aria-describedby="gender-error"
+                                    className={inputClass("gender")}
                                 >
                                     <option value="">
                                         Izaberi pol
                                     </option>
 
-                                    <option value="female">
+                                    <option value="Female">
                                         Žensko
                                     </option>
 
-                                    <option value="male">
+                                    <option value="Male">
                                         Muško
                                     </option>
 
                                 </select>
 
-                                <p className="text-xs text-zinc-500">
-                                    Na osnovu ovoga će se prikazivati
-                                    Vagabunda ili Vagabundo.
-                                </p>
+                                <FieldError
+                                    id="gender-error"
+                                    message={errorFor("gender")}
+                                />
 
                             </div>
 
@@ -330,17 +555,19 @@ export default function RegisterPage() {
                                     name="username"
                                     value={form.username}
                                     onChange={handleChange}
-                                    minLength={3}
-                                    maxLength={50}
-                                    pattern="[A-Za-z0-9_]{3,50}"
+                                    maxLength={30}
                                     required
-                                    className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                    aria-invalid={
+                                        fieldError?.field === "username"
+                                    }
+                                    aria-describedby="username-error"
+                                    className={inputClass("username")}
                                 />
 
-                                <p className="text-xs text-zinc-500">
-                                    Minimum 3 karaktera. Dozvoljena su
-                                    slova, brojevi i _.
-                                </p>
+                                <FieldError
+                                    id="username-error"
+                                    message={errorFor("username")}
+                                />
 
                             </div>
 
@@ -365,8 +592,18 @@ export default function RegisterPage() {
                                     type="email"
                                     value={form.email}
                                     onChange={handleChange}
+                                    maxLength={254}
                                     required
-                                    className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                    aria-invalid={
+                                        fieldError?.field === "email"
+                                    }
+                                    aria-describedby="email-error"
+                                    className={inputClass("email")}
+                                />
+
+                                <FieldError
+                                    id="email-error"
+                                    message={errorFor("email")}
                                 />
 
                             </div>
@@ -393,8 +630,16 @@ export default function RegisterPage() {
                                     value={form.phone}
                                     onChange={handleChange}
                                     required
-                                    placeholder="06XXXXXXXX"
-                                    className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                    aria-invalid={
+                                        fieldError?.field === "phone"
+                                    }
+                                    aria-describedby="phone-error"
+                                    className={inputClass("phone")}
+                                />
+
+                                <FieldError
+                                    id="phone-error"
+                                    message={errorFor("phone")}
                                 />
 
                             </div>
@@ -422,14 +667,18 @@ export default function RegisterPage() {
                                         type="password"
                                         value={form.password}
                                         onChange={handleChange}
-                                        minLength={8}
                                         required
-                                        className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                        aria-invalid={
+                                            fieldError?.field === "password"
+                                        }
+                                        aria-describedby="password-error"
+                                        className={inputClass("password")}
                                     />
 
-                                    <p className="text-xs text-zinc-500">
-                                        Minimum 8 karaktera.
-                                    </p>
+                                    <FieldError
+                                        id="password-error"
+                                        message={errorFor("password")}
+                                    />
 
                                 </div>
 
@@ -452,9 +701,18 @@ export default function RegisterPage() {
                                         type="password"
                                         value={form.confirmPassword}
                                         onChange={handleChange}
-                                        minLength={8}
                                         required
-                                        className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 outline-none transition focus:border-[#d8c6ff] focus:bg-white focus:ring-4 focus:ring-[#d8c6ff]/30"
+                                        aria-invalid={
+                                            fieldError?.field ===
+                                            "confirmPassword"
+                                        }
+                                        aria-describedby="confirmPassword-error"
+                                        className={inputClass("confirmPassword")}
+                                    />
+
+                                    <FieldError
+                                        id="confirmPassword-error"
+                                        message={errorFor("confirmPassword")}
                                     />
 
                                 </div>
