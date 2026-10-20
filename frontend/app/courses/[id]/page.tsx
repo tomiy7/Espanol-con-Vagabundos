@@ -127,45 +127,121 @@ export default async function CoursePage({
 
     const lessons = await getLessons(id);
 
+
     return (
-        <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
-            <main className="w-full max-w-3xl py-16 px-6">
-                <h1 className="text-3xl font-semibold mb-2 text-black dark:text-zinc-50">
-                    {course.name}
-                </h1>
+        <main className="flex-1 bg-zinc-50 px-4 py-10 sm:px-6 sm:py-16">
+            <div className="mx-auto grid w-full max-w-5xl gap-8 lg:grid-cols-[1fr_320px]">
 
-                {course.ebook_pdf && (
-                    <a href={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${course.ebook_pdf}`}
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       className="inline-block mb-4 text-blue-600 dark:text-blue-400 underline"
+                <section className="min-w-0">
+                    <Link
+                        href="/courses"
+                        className="mb-6 inline-block text-sm text-zinc-500 hover:text-zinc-900"
                     >
-                        Preuzmi e-book uz kurs ({parseFloat(course.ebook_price)} €)
-                    </a>
-                )}
+                        ← Svi kursevi
+                    </Link>
 
-                <div className="text-zinc-600 dark:text-zinc-400 mb-8">
-                    {renderContent(course.description)}
-                </div>
+                    <div className="mb-8 rounded-3xl border border-zinc-200 bg-white p-6 sm:p-8">
+                        <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-purple-600">
+                            Español con Vagabundos
+                        </p>
 
-                <h2 className="text-xl font-medium mb-4 text-black dark:text-zinc-50">
-                    Lekcije
-                </h2>
+                        <h1 className="mb-5 text-3xl font-bold leading-tight text-zinc-900 sm:text-4xl">
+                            {course.name}
+                        </h1>
 
-                <div className="flex flex-col gap-3">
-                    {lessons.map((lesson) => (
-                        <Link
-                            key={lesson.id}
-                            href={`/courses/${id}/lessons/${lesson.id}`}
-                            className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors block"
+                        <div className="leading-7 text-zinc-600">
+                            {renderContent(course.description)}
+                        </div>
+                    </div>
+
+                    <section>
+                        <h2 className="mb-4 text-2xl font-semibold text-zinc-900">
+                            Šta te očekuje na kursu?
+                        </h2>
+
+                        <div className="flex flex-col gap-3">
+                            {lessons.length > 0 ? (
+                                lessons.map((lesson) => (
+                                    <Link
+                                        key={lesson.id}
+                                        href={`/courses/${id}/lessons/${lesson.id}`}
+                                        className="group flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4 transition hover:border-purple-300 hover:shadow-sm sm:p-5"
+                                    >
+                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 font-semibold text-purple-800">
+                                        {lesson.order}
+                                    </span>
+
+                                        <span className="min-w-0 flex-1">
+                                        <span className="block font-medium text-zinc-900">
+                                            {lesson.title}
+                                        </span>
+                                        <span className="mt-1 block text-sm text-zinc-500">
+                                            Pogledaj lekciju
+                                        </span>
+                                    </span>
+
+                                        <span className="text-xl text-zinc-400 transition group-hover:translate-x-1 group-hover:text-purple-600">
+                                        →
+                                    </span>
+                                    </Link>
+                                ))
+                            ) : (
+                                <p className="rounded-2xl border border-dashed border-zinc-300 bg-white p-6 text-zinc-500">
+                                    Lekcije će uskoro biti dostupne.
+                                </p>
+                            )}
+                        </div>
+                    </section>
+                </section>
+
+                <aside className="lg:sticky lg:top-6 lg:self-start">
+                    <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+                        <p className="mb-2 text-sm text-zinc-500">
+                            Cena kursa
+                        </p>
+
+                        <p className="mb-6 text-4xl font-bold text-zinc-900">
+                            {parseFloat(course.price).toLocaleString("sr-RS")} €
+                        </p>
+
+                        <button
+                            type="button"
+                            className="w-full rounded-full bg-[#d8c6ff] px-6 py-3.5 font-semibold text-zinc-900 transition hover:bg-[#c9b0ff] hover:shadow-md"
                         >
-                            <p className="text-black dark:text-zinc-50">
-                                {lesson.order}. {lesson.title}
-                            </p>
-                        </Link>
-                    ))}
-                </div>
-            </main>
-        </div>
+                            Kupi kurs
+                        </button>
+
+                        <p className="mt-3 text-center text-xs text-zinc-500">
+                            Tvoj sledeći korak ka učenju španskog.
+                        </p>
+
+                        {course.ebook_pdf && (
+                            <div className="mt-6 border-t border-zinc-200 pt-6">
+                                <p className="mb-2 font-semibold text-zinc-900">
+                                    E-book uz kurs
+                                </p>
+
+                                <p className="mb-4 text-sm leading-6 text-zinc-600">
+                                    Dodatni materijal za učenje i vežbanje.
+                                </p>
+
+                                <p className="mb-4 text-xl font-semibold text-zinc-900">
+                                    {parseFloat(course.ebook_price).toLocaleString("sr-RS")} €
+                                </p>
+
+                                <a
+                                    href={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${course.ebook_pdf}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block rounded-full border border-zinc-300 px-5 py-3 text-center text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                                >
+                                    Pogledaj e-book
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </aside>
+            </div>
+        </main>
     );
 }
