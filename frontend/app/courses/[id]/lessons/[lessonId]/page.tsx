@@ -117,6 +117,37 @@ function renderContent(content: Section["content"]) {
     });
 }
 
+
+function getYouTubeEmbedUrl(url: string): string | null {
+    try {
+        const parsed = new URL(url);
+        let videoId: string | null = null;
+
+        if (parsed.hostname === "youtu.be") {
+            videoId = parsed.pathname.slice(1);
+        } else if (
+            ["youtube.com", "www.youtube.com", "m.youtube.com"].includes(
+                parsed.hostname
+            )
+        ) {
+            if (parsed.pathname === "/watch") {
+                videoId = parsed.searchParams.get("v");
+            } else if (
+                parsed.pathname.startsWith("/embed/") ||
+                parsed.pathname.startsWith("/shorts/")
+            ) {
+                videoId = parsed.pathname.split("/")[2];
+            }
+        }
+
+        return videoId
+            ? `https://www.youtube.com/embed/${videoId}`
+            : null;
+    } catch {
+        return null;
+    }
+}
+
 export default async function LessonPage({
                                              params,
                                          }: {
@@ -138,16 +169,46 @@ export default async function LessonPage({
                     {lesson.title}
                 </h1>
 
-                {lesson.recording_url && (
 
-                    <a href={lesson.recording_url}
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       className="inline-block mb-8 text-blue-600 dark:text-blue-400 underline"
-                    >
-                        Pogledaj snimak lekcije
-                    </a>
+                {lesson.recording_url ? (
+                    (() => {
+                        const embedUrl = getYouTubeEmbedUrl(lesson.recording_url);
+
+                        return embedUrl ? (
+                            <div className="mb-8 w-full overflow-hidden rounded-2xl bg-black shadow-sm">
+                                <div className="aspect-video w-full">
+                                    <iframe
+                                        src={embedUrl}
+                                        title={`Snimak lekcije: ${lesson.title}`}
+                                        className="h-full w-full"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowFullScreen
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <a
+                                href={lesson.recording_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mb-8 inline-block text-blue-600 underline"
+                            >
+                                Pogledaj snimak lekcije
+                            </a>
+                        );
+                    })()
+                ) : (
+                    <div className="mb-8 flex aspect-video w-full flex-col items-center justify-center rounded-2xl border border-dashed border-purple-300 bg-purple-50 px-6 text-center">
+                        <span className="mb-3 text-4xl">▶</span>
+                        <h2 className="text-lg font-semibold text-zinc-800">
+                            Snimak uskoro stiže
+                        </h2>
+                        <p className="mt-2 text-sm text-zinc-600">
+                            Video lekcija će biti dostupna ovde.
+                        </p>
+                    </div>
                 )}
+
 
                 <div className="flex flex-col gap-6">
                     {sections.map((section) => (
