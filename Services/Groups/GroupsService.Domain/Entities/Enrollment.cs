@@ -29,7 +29,7 @@ public class Enrollment : AggregateRoot
     
     private readonly List<CompletedLesson> _completedLessons = new();
     public IReadOnlyCollection<CompletedLesson> CompletedLessons => _completedLessons.AsReadOnly();
-    public int CompletedLessonsCount => _completedLessons.Count;
+    public int CompletedLessonCount => _completedLessons.Count;
     
     private Enrollment() { }
 

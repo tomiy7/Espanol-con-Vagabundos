@@ -19,7 +19,7 @@ public class Group : AggregateRoot
 
     private readonly List<GroupMember> _members = new();
     public IReadOnlyCollection<GroupMember> Members => _members.AsReadOnly();
-    public int MembersCount => _members.Count;
+    public int MemberCount => _members.Count;
     
     private readonly List<Slot> _slots = new();
     public IReadOnlyCollection<Slot> Slots => _slots.AsReadOnly();
