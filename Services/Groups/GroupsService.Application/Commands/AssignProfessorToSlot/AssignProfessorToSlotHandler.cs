@@ -34,6 +34,8 @@ public class AssignProfessorToSlotHandler
 
         group.AssignProfessorToSlot(command.SlotIndex, command.DayOfWeek, command.Time, command.ProfessorId);
         await _groupRepository.SaveChangesAsync();
+        
+        // TODO notifikacija
     }
 
 }
