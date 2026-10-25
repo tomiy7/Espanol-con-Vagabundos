@@ -19,7 +19,7 @@ public class AssignProfessorToSlotHandler
     public async Task Handle(AssignProfessorToSlotCommand command)
     {
         var group = await _groupRepository.GetByIdAsync(command.GroupId)
-                    ?? throw new GroupsDomainException($"Group with id {command.GroupId} does not exist.");
+            ?? throw new GroupsDomainException($"Group with id {command.GroupId} does not exist.");
 
         // Nivo 1 zastita od duplog zakazivanja - vidi komentar na HasConflictingSlotAsync.
         // NAPOMENA: ovo je provera na DayOfWeek+Time pravilu, ne na konkretnom datumu -
