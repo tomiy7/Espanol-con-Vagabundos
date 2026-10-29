@@ -52,23 +52,23 @@ export default function Header() {
 
         return name;
     }
-    
+
     return (
-        <header className="w-full bg-[#d8c6ff]">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <header className="sticky top-0 z-40 w-full bg-[#d8c6ff] shadow-sm">
+            <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
 
                 <Link
-                    href="/"
-                    className="text-lg font-semibold text-zinc-900"
+                    href="/" 
+                    className="ext-zinc-800 font-bold underline-offset-4 transition hover:text-zinc-950 hover:underline"
                 >
                     Español con Vagabundos
                 </Link>
 
-                <nav className="flex items-center gap-6">
+                <nav className="flex items-center gap-3 text-[15px] font-medium sm:gap-6">
 
                     <Link
                         href="/courses"
-                        className="text-zinc-700 transition hover:text-zinc-950"
+                        className="text-zinc-800 underline-offset-4 transition hover:text-zinc-950 hover:underline"
                     >
                         Kursevi
                     </Link>
@@ -80,7 +80,7 @@ export default function Header() {
                                 onClick={() =>
                                     setIsMenuOpen(!isMenuOpen)
                                 }
-                                className="flex items-center gap-2 text-zinc-700 transition hover:text-zinc-950"
+                                className="flex items-center gap-2 rounded-full bg-white/60 px-3 py-1.5 text-zinc-800 transition hover:bg-white"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -129,14 +129,14 @@ export default function Header() {
                         <>
                             <Link
                                 href="/login"
-                                className="text-zinc-700 transition hover:text-zinc-950"
+                                className="text-zinc-800 underline-offset-4 transition hover:text-zinc-950 hover:underline"
                             >
                                 Prijava
                             </Link>
 
                             <Link
                                 href="/register"
-                                className="text-zinc-700 transition hover:text-zinc-950"
+                                className="rounded-full bg-zinc-900 px-4 py-2 text-white transition hover:bg-zinc-700"
                             >
                                 Registracija
                             </Link>
