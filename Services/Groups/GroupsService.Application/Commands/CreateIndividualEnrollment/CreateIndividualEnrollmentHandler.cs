@@ -48,6 +48,8 @@ public class CreateIndividualEnrollmentHandler
 
         await _enrollmentRepository.SaveChangesAsync();
         await _groupRepository.SaveChangesAsync();
+        
+        //TODO notifikacija
 
         return new CreateIndividualEnrollmentResult(enrollment.Id, group.Id);
     }

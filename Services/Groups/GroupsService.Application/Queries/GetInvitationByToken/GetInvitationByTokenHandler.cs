@@ -9,15 +9,18 @@ public class GetInvitationByTokenHandler
 {
     private readonly IPartnerInvitationRepository _invitationRepository;
     private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IUserDirectory _userDirectory;
     private readonly ICourseDirectory _courseDirectory;
 
     public GetInvitationByTokenHandler(
         IPartnerInvitationRepository invitationRepository,
         IEnrollmentRepository enrollmentRepository,
+        IUserDirectory userDirectory,
         ICourseDirectory courseDirectory)
     {
         _invitationRepository = invitationRepository;
         _enrollmentRepository = enrollmentRepository;
+        _userDirectory = userDirectory;
         _courseDirectory = courseDirectory;
     }
 
@@ -29,13 +32,15 @@ public class GetInvitationByTokenHandler
         var inviterEnrollment = await _enrollmentRepository.GetByIdAsync(invitation.InviterEnrollmentId);
         if (inviterEnrollment == null) return null;
 
-        var courseName = await _courseDirectory.GetCourseNameAsync(inviterEnrollment.CourseId) ?? "kurs";
+        var courseName = await _courseDirectory.GetCourseNameAsync(inviterEnrollment.CourseId);
+        var inviter = await _userDirectory.GetUserContactAsync(inviterEnrollment.UserId);
 
         return new InvitationDetailDto(
             Id: invitation.Id,
             Status: invitation.Status,
             IsExpired: invitation.IsExpired,
             CourseId: inviterEnrollment.CourseId,
-            CourseName: courseName);
+            CourseName: courseName,
+            InviterName: inviter?.FullName);
     }
 }

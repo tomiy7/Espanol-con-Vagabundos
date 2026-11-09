@@ -32,7 +32,8 @@ public class AssignProfessorToSlotHandler
             throw new GroupsDomainException(
                 $"Professor already has a conflicting slot on {command.DayOfWeek} at {command.Time} in another group.");
 
-        group.AssignProfessorToSlot(command.SlotIndex, command.DayOfWeek, command.Time, command.ProfessorId);
+        group.AssignProfessorToSlot(
+            command.SlotIndex, command.DayOfWeek, command.Time, command.ProfessorId, allowReassign: command.IsAdmin);
         await _groupRepository.SaveChangesAsync();
         
         // TODO notifikacija

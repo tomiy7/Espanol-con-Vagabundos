@@ -29,7 +29,7 @@ public class InvitePartnerHandler
             throw new GroupsDomainException("Cannot invite yourself as a partner.");
 
         // Provera i za pozvanog, ne samo inicijatora - nema smisla slati poziv (i mejl)
-        // osobi koja vec ima aktivan/searching upis za ovaj kurs, kad ce svakako da
+        // osobi koja vec ima neotkazan (ili zavrsen) upis za ovaj kurs, kad ce svakako da
         // propadne na Accept-u (vidi istu proveru u AcceptInvitationHandler, koja je
         // tu kao odbrana druge linije za slucaj da se stanje promeni izmedju invite-a
         // i accept-a).
@@ -54,15 +54,16 @@ public class InvitePartnerHandler
         }
         else
         {
-            inviterEnrollment =
-                Enrollment.CreateSearching(command.InviterUserId, command.CourseId, EnrollmentType.Pair);
+            inviterEnrollment = Enrollment.CreateSearching(command.InviterUserId, command.CourseId, EnrollmentType.Pair);
             await _enrollmentRepository.AddAsync(inviterEnrollment);
         }
-        
+
         var previousAttempts = await _invitationRepository.GetByInviterAndInviteeAsync(
             inviterEnrollment.Id, command.InviteeUserId);
 
-        var attemptNumber = previousAttempts.Count + 1;
+        // Prihvacen poziv se ne racuna: ako je grupa kasnije rasformirana (partner je
+        // otkazao), brojac pokusaja krece ispocetka. Odbijeni, istekli i cekajuci se racunaju.
+        var attemptNumber = previousAttempts.Count(i => i.Status != InvitationStatus.Accepted) + 1;
         if (attemptNumber > _options.PartnerInvitationMaxAttempts)
             throw new GroupsDomainException(
                 $"Maximum number of invitation attempts ({_options.PartnerInvitationMaxAttempts}) reached for this partner.");
@@ -73,6 +74,8 @@ public class InvitePartnerHandler
         await _invitationRepository.AddAsync(invitation);
         await _enrollmentRepository.SaveChangesAsync();
         await _invitationRepository.SaveChangesAsync();
+        
+        //TODO notikacija
         
         return new InvitePartnerResult(inviterEnrollment.Id, invitation.Id);
     }

@@ -9,4 +9,5 @@ public record InvitationDetailDto(
     InvitationStatus Status,
     bool IsExpired,
     Guid CourseId,
-    string CourseName);
+    string? CourseName,
+    string? InviterName);

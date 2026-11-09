@@ -1,14 +1,23 @@
 ﻿using GroupsService.Application.Interfaces;
+using GroupsService.Application.Options;
+using Microsoft.Extensions.Options;
 
 namespace GroupsService.Application.Queries.CheckAccess;
 
 public class CheckAccessHandler
 {
     private readonly IEnrollmentRepository _repository;
+    private readonly IGroupRepository _groupRepository;
+    private readonly EnrollmentOptions _options;
 
-    public CheckAccessHandler(IEnrollmentRepository repository)
+    public CheckAccessHandler(
+        IEnrollmentRepository repository,
+        IGroupRepository groupRepository,
+        IOptions<EnrollmentOptions> options)
     {
         _repository = repository;
+        _groupRepository = groupRepository;
+        _options = options.Value;
     }
     
     public async Task<CheckAccessResult> Handle(CheckAccessQuery query)
@@ -21,6 +30,17 @@ public class CheckAccessHandler
         var enrollments = await _repository.GetByUserIdAsync(query.UserId);
 
         var granting = enrollments.FirstOrDefault(e => e.CourseId == query.CourseId && e.GrantsAccess());
-        return new CheckAccessResult(granting is not null, granting?.Id);
+        if (granting is null)
+            return new CheckAccessResult(false);
+
+        var unlocked = 0;
+        if (granting.GroupId.HasValue)
+        {
+            var group = await _groupRepository.GetByIdAsync(granting.GroupId.Value);
+            if (group?.UnlockStartsAt is { } unlockStartsAt)
+                unlocked = granting.UnlockedLessons(unlockStartsAt, _options.LessonsPerWeek);
+        }
+
+        return new CheckAccessResult(true, granting.Id, unlocked);
     }
 }

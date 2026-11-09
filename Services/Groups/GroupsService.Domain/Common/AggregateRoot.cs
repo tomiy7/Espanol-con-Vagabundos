@@ -1,6 +1,6 @@
 ﻿namespace GroupsService.Domain;
 
-public class AggregateRoot : Entity
+public abstract class AggregateRoot : Entity
 {
     private readonly List<object> _domainEvents = new();
     

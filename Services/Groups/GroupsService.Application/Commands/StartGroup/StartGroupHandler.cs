@@ -1,4 +1,5 @@
 ﻿using GroupsService.Application.Interfaces;
+using GroupsService.Domain.Enums;
 using GroupsService.Domain.Exceptions;
 
 namespace GroupsService.Application.Commands.StartGroup;
@@ -21,9 +22,12 @@ public class StartGroupHandler
         var group = await _groupRepository.GetByIdAsync(command.GroupId)
             ?? throw new GroupsDomainException($"Group with id {command.GroupId} does not exist.");
 
-        group.Start(command.Force);
+        group.Start(command.Force, command.UnlockStartsAt);
 
-        var members = await _enrollmentRepository.GetByGroupIdAsync(group.Id);
+        // Samo upisi koji cekaju start (Searching/Ready); ostali se preskacu.
+        var members = (await _enrollmentRepository.GetByGroupIdAsync(group.Id))
+            .Where(m => m.Status is EnrollmentStatus.Searching or EnrollmentStatus.Ready)
+            .ToList();
         foreach (var member in members)
             member.MarkActive();
 

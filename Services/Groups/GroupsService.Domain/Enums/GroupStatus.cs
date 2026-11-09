@@ -5,5 +5,6 @@ public enum GroupStatus
     Forming,
     Ready,
     Active,
-    Completed
+    Completed,
+    Dissolved
 }

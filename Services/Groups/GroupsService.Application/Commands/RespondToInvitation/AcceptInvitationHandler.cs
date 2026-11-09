@@ -29,6 +29,12 @@ public class AcceptInvitationHandler
         var inviterEnrollment = await _enrollmentRepository.GetByIdAsync(invitation.InviterEnrollmentId)
             ?? throw new GroupsDomainException("Inviter enrollment no longer exists.");
         
+        // Inicijator mora i dalje da trazi partnera: moze imati vise poziva na cekanju
+        // (npr. poslao je dvojici), pa je drugi accept zakasnio, ili je inicijator
+        // u medjuvremenu otkazao.
+        if (inviterEnrollment.Status != EnrollmentStatus.Searching || inviterEnrollment.GroupId.HasValue)
+            throw new GroupsDomainException("The person who invited you is no longer looking for a partner.");
+        
         // Druga linija odbrane (prva je u InvitePartnerHandler, u trenutku slanja
         // poziva) - stanje se moglo promeniti izmedju invite-a i ovog klika (npr.
         // pozvani se u medjuvremenu upisao individualno na isti kurs).

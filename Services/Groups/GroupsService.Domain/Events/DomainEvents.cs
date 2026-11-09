@@ -34,6 +34,8 @@ public record EnrollmentCompleted(Guid EnrollmentId);
 
 public record GroupCompleted(Guid GroupId);
 
+public record GroupDissolved(Guid GroupId);
+
 public record EnrollmentCancelled(Guid EnrollmentId);
 
 public record EnrollmentFrozen(Guid EnrollmentId, Guid ApprovedByUserId);
