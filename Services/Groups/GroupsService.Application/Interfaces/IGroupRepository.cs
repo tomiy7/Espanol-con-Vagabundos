@@ -6,9 +6,9 @@ namespace GroupsService.Application.Interfaces;
 
 public interface IGroupRepository : IAsyncRepository<Group>
 {
-    // Otvorene Group-tip grupe za kurs (Forming/Ready, ispod MaxSize) - gde CreateGroupEnrollment
-    // pokusava prvo da nadje mesto pre nego sto otvori novu grupu.
-    Task<Group?> FindOpenGroupForCourseAsync(Guid courseId, GroupType type);
+    // Lista grupa za profesora/admina, sa opcionim filterima. professorId vraca grupe
+    // u kojima taj profesor drzi bar jedan termin ("moje grupe" i zahtevi za Individual).
+    Task<List<Group>> GetListAsync(Guid? courseId, GroupStatus? status, GroupType? type, Guid? professorId);
 
     Task<List<Group>> GetAvailableForCourseAsync(Guid courseId);
 

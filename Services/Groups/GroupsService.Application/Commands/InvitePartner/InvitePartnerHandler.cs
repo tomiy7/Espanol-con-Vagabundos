@@ -33,15 +33,15 @@ public class InvitePartnerHandler
         // propadne na Accept-u (vidi istu proveru u AcceptInvitationHandler, koja je
         // tu kao odbrana druge linije za slucaj da se stanje promeni izmedju invite-a
         // i accept-a).
-        var inviteeExisting = await _enrollmentRepository.GetActiveOrSearchingAsync(
+        var inviteeExisting = await _enrollmentRepository.GetNonCancelledAsync(
             command.InviteeUserId, command.CourseId);
         if (inviteeExisting is not null)
-            throw new GroupsDomainException("This person already has an active or pending enrollment for this course.");
+            throw EnrollmentGuard.Blocked(inviteeExisting, self: false);
 
         // Inicijatorov Enrollment: ako vec postoji Searching Pair enrollment za ovaj
         // kurs (ovo je retry nakon odbijenog/isteklog poziva), ponovo ga koristimo -
         // ne pravimo novi red svaki put kad neko pokusa ponovo.
-        var existing = await _enrollmentRepository.GetActiveOrSearchingAsync(command.InviterUserId, command.CourseId);
+        var existing = await _enrollmentRepository.GetNonCancelledAsync(command.InviterUserId, command.CourseId);
 
         Enrollment inviterEnrollment;
         if (existing is { Type: EnrollmentType.Pair, GroupId: null })
@@ -50,7 +50,7 @@ public class InvitePartnerHandler
         }
         else if (existing is not null)
         {
-            throw new GroupsDomainException("You already have an active or pending enrollment for this course.");
+            throw EnrollmentGuard.Blocked(existing);
         }
         else
         {

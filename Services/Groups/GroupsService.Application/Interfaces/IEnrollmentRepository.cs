@@ -7,5 +7,8 @@ public interface IEnrollmentRepository : IAsyncRepository<Enrollment>
 {
     Task<List<Enrollment>> GetByUserIdAsync(Guid userId);
     Task<List<Enrollment>> GetByGroupIdAsync(Guid groupId);
-    Task<Enrollment?> GetActiveOrSearchingAsync(Guid userId, Guid courseId);
+    // Upis korisnika na kurs koji nije otkazan (Searching/Ready/Active/Frozen/Completed).
+    // Zavrsen kurs se ne pohadja ponovo, pa i Completed blokira novi upis; otkazan ne
+    // blokira. Po definiciji ih je najvise jedan.
+    Task<Enrollment?> GetNonCancelledAsync(Guid userId, Guid courseId);
 }

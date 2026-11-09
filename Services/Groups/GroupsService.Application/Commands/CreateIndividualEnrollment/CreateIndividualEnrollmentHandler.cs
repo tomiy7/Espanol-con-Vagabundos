@@ -23,10 +23,10 @@ public class CreateIndividualEnrollmentHandler
         // na "upisi se", ili pokusaj Individual upisa dok vec postoji Group/Pair upis
         // (Searching/Ready/Active) za isti kurs. Zavrseni/otkazani upisi NE blokiraju -
         // ponovno pohadjanje kursa je legitiman slucaj.
-        var existing = await _enrollmentRepository.GetActiveOrSearchingAsync(command.UserId, command.CourseId);
+        var existing = await _enrollmentRepository.GetNonCancelledAsync(command.UserId, command.CourseId);
         
         if (existing is not null)
-            throw new GroupsDomainException("You already have an active or pending enrollment for this course.");
+            throw EnrollmentGuard.Blocked(existing);
 
         // NAPOMENA: ne proveravamo da ProfessorId ima stvarno Professor rolu u Auth-u,
         // niti da CourseId postoji u Courses. API sloj je iza JWT-a; ovo ostaje tech debt.

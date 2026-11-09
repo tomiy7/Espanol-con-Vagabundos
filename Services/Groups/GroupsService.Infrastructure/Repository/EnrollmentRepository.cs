@@ -33,8 +33,8 @@ public class EnrollmentRepository : RepositoryBase<Enrollment>, IEnrollmentRepos
             .Where(e => e.GroupId == groupId)
             .ToListAsync();
 
-    public async Task<Enrollment?> GetActiveOrSearchingAsync(Guid userId, Guid courseId) =>
+    public async Task<Enrollment?> GetNonCancelledAsync(Guid userId, Guid courseId) =>
         await _db.Enrollments.FirstOrDefaultAsync(e =>
             e.UserId == userId && e.CourseId == courseId &&
-            e.Status != EnrollmentStatus.Cancelled && e.Status != EnrollmentStatus.Completed);
+            e.Status != EnrollmentStatus.Cancelled);
 }

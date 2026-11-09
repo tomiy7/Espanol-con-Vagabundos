@@ -24,22 +24,19 @@ public class GroupRepository : RepositoryBase<Group>, IGroupRepository
 
     public override async Task<List<Group>> GetAllAsync() =>
         await _db.Groups.Include(g => g.Members).Include(g => g.Slots).ToListAsync();
-
-    public async Task<Group?> FindOpenGroupForCourseAsync(Guid courseId, GroupType type)
+    
+    public async Task<List<Group>> GetListAsync(
+        Guid? courseId, GroupStatus? status, GroupType? type, Guid? professorId)
     {
-        var candidates = await _db.Groups
-            .Include(g => g.Members)
-            .Include(g => g.Slots)
-            .Where(g => g.CourseId == courseId && g.Type == type
-                    && (g.Status == GroupStatus.Forming || g.Status == GroupStatus.Ready))
-            .ToListAsync();
-        
-        // MaxSize je computed property (zavisi od Type) - EF ga ne moze prevesti u SQL,
-        // filter ide u memoriji. Broj kandidata po kursu je mali, pa nije problem.
-        return candidates
-            .Where(g=> g.MemberCount < g.MaxSize && !g.FormationWindowExpired)
-            .OrderBy(g => g.CreatedAt)
-            .FirstOrDefault();
+        var query = _db.Groups.Include(g => g.Members).Include(g => g.Slots).AsQueryable();
+
+        if (courseId.HasValue) query = query.Where(g => g.CourseId == courseId.Value);
+        if (status.HasValue) query = query.Where(g => g.Status == status.Value);
+        if (type.HasValue) query = query.Where(g => g.Type == type.Value);
+        if (professorId.HasValue) query = query.Where(g => g.Slots.Any(s => s.ProfessorId == professorId.Value));
+
+        var groups = await query.ToListAsync();
+        return groups.OrderByDescending(g => g.CreatedAt).ToList();
     }
 
     // Samo GroupType.Group - to su jedine grupe u koje se pridruzuje "otvoreno"

@@ -26,9 +26,9 @@ public class CreateGroupEnrollmentHandler
     public async Task<CreateGroupEnrollmentResult> Handle(CreateGroupEnrollmentCommand command)
     {
         // Ista provera kao u CreateIndividualEnrollmentHandler/InvitePartnerHandler
-        var existingEnrollment = await _enrollmentRepository.GetActiveOrSearchingAsync(command.UserId, command.CourseId);
+        var existingEnrollment = await _enrollmentRepository.GetNonCancelledAsync(command.UserId, command.CourseId);
         if (existingEnrollment is not null)
-            throw new GroupsDomainException("You already have an active or pending enrollment for this course.");
+            throw EnrollmentGuard.Blocked(existingEnrollment);
 
         var enrollment = Enrollment.CreateSearching(command.UserId, command.CourseId, EnrollmentType.Group);
         await _enrollmentRepository.AddAsync(enrollment);

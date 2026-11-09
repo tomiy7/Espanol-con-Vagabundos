@@ -32,10 +32,10 @@ public class AcceptInvitationHandler
         // Druga linija odbrane (prva je u InvitePartnerHandler, u trenutku slanja
         // poziva) - stanje se moglo promeniti izmedju invite-a i ovog klika (npr.
         // pozvani se u medjuvremenu upisao individualno na isti kurs).
-        var inviteeExisting = await _enrollmentRepository.GetActiveOrSearchingAsync(
+        var inviteeExisting = await _enrollmentRepository.GetNonCancelledAsync(
             invitation.InviteeUserId, inviterEnrollment.CourseId);
         if (inviteeExisting is not null)
-            throw new GroupsDomainException("You already have an active or pending enrollment for this course.");
+            throw EnrollmentGuard.Blocked(inviteeExisting);
 
         var inviteeEnrollment = Enrollment.CreateSearching(
             invitation.InviteeUserId, inviterEnrollment.CourseId, EnrollmentType.Pair);
