@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 type ListItem = {
@@ -73,13 +74,6 @@ function renderContent(content: Homepage["content"]) {
         const block = blocks[i];
         const nextBlock = blocks[i + 1];
 
-        /*
-          PERSON SECTION
-    
-          Ako imamo paragraph + image ili image + paragraph,
-          spajamo ih u jedan red.
-        */
-
         const isParagraphThenImage =
             block.type === "paragraph" &&
             nextBlock?.type === "image" &&
@@ -140,18 +134,9 @@ function renderContent(content: Homepage["content"]) {
             );
 
             personIndex++;
-
-            /*
-              Preskačemo sledeći blok jer smo ga već prikazali
-            */
             i++;
-
             continue;
         }
-
-        /*
-          PARAGRAPH
-        */
 
         if (block.type === "paragraph") {
             renderedBlocks.push(
@@ -167,10 +152,6 @@ function renderContent(content: Homepage["content"]) {
             continue;
         }
 
-        /*
-          HEADER
-        */
-
         if (block.type === "header") {
             renderedBlocks.push(
                 <div key={i} className="mt-12 mb-5">
@@ -182,10 +163,6 @@ function renderContent(content: Homepage["content"]) {
 
             continue;
         }
-
-        /*
-          LIST
-        */
 
         if (
             block.type === "list" &&
@@ -209,10 +186,6 @@ function renderContent(content: Homepage["content"]) {
             continue;
         }
 
-        /*
-          NESTED LIST
-        */
-
         if (
             block.type === "nestedlist" &&
             Array.isArray(block.data.items)
@@ -227,10 +200,6 @@ function renderContent(content: Homepage["content"]) {
 
             continue;
         }
-
-        /*
-          IMAGE KOJA NIJE DEO PERSON SECTION-A
-        */
 
         if (
             block.type === "image" &&
@@ -271,12 +240,10 @@ export default async function Home() {
             <section className="w-full bg-[#bdebff]">
                 <div className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-6 py-16 md:flex-row md:py-20">
 
-                    {/* TEXT */}
-
                     <div className="flex-1 text-center md:text-left">
-            <span className="mb-5 inline-block rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-zinc-700">
-              Aprende español con nosotros
-            </span>
+                        <span className="mb-5 inline-block rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-zinc-700">
+                            Aprende español con nosotros
+                        </span>
 
                         <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-zinc-900 md:text-6xl">
                             {homepage.hero_title}
@@ -295,8 +262,6 @@ export default async function Home() {
                         </Link>
                     </div>
 
-                    {/* HERO IMAGE */}
-
                     {homepage.hero_image && (
                         <div className="flex flex-1 justify-center">
                             <img
@@ -306,13 +271,15 @@ export default async function Home() {
                             />
                         </div>
                     )}
-
                 </div>
             </section>
 
-            {/* CONTENT */}
+            {/* O NAMA / CONTENT IZ DIRECTUS-A */}
 
-            <section className="mx-auto w-full max-w-6xl px-6 py-16 md:py-20">
+            <section
+                id="o-nama"
+                className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-16 md:py-20"
+            >
                 <div className="mx-auto max-w-5xl">
                     {renderContent(homepage.content)}
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type User = {
@@ -17,12 +18,13 @@ type User = {
 
 export default function MyAccountPage() {
     const router = useRouter();
-
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
+        let isMounted = true;
+
         async function getUser() {
             const token = localStorage.getItem("accessToken");
 
@@ -32,262 +34,134 @@ export default function MyAccountPage() {
             }
 
             try {
-                const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_AUTH_URL}/auth/me`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
+                const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/auth/me`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
 
                 if (!res.ok) {
-                    setError("Nije moguće učitati podatke o korisniku.");
+                    if (isMounted) setError("Nije moguće učitati podatke o korisniku.");
                     return;
                 }
 
                 const data = await res.json();
-
-                console.log("USER FROM /auth/me:", data);
-
-                setUser(data);
+                if (isMounted) setUser(data);
             } catch {
-                setError("Greška pri povezivanju sa serverom.");
+                if (isMounted) setError("Greška pri povezivanju sa serverom.");
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         }
 
         getUser();
+        return () => { isMounted = false; };
     }, [router]);
 
     function getVagabundoName() {
-        const name =
-            user?.firstName ||
-            user?.username ||
-            "korisniče";
-
+        const name = user?.firstName || user?.username || "";
         const gender = user?.gender?.trim().toLowerCase();
-
-        if (
-            gender === "female" ||
-            gender === "žensko" ||
-            gender === "zensko"
-        ) {
-            return `Vagabunda ${name}`;
-        }
-
-        if (
-            gender === "male" ||
-            gender === "muško" ||
-            gender === "musko"
-        ) {
-            return `Vagabundo ${name}`;
-        }
-
+        if (["female", "žensko", "zensko"].includes(gender || "")) return `Vagabunda ${name}`;
+        if (["male", "muško", "musko"].includes(gender || "")) return `Vagabundo ${name}`;
         return name;
     }
 
     function handleLogout() {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-
         window.dispatchEvent(new Event("auth-change"));
-
         router.push("/");
     }
 
     if (loading) {
-        return (
-            <div className="flex flex-1 justify-center py-16">
-                Učitavanje...
-            </div>
-        );
+        return <div className="flex flex-1 items-center justify-center py-24 text-zinc-600">Učitavanje tvog naloga...</div>;
     }
 
     if (error) {
         return (
-            <div className="flex flex-1 justify-center py-16 text-red-600">
-                {error}
-            </div>
+            <main className="flex flex-1 items-center justify-center px-6 py-24">
+                <div className="max-w-md rounded-3xl border border-red-200 bg-red-50 p-8 text-center text-red-700">
+                    <p>{error}</p>
+                    <button onClick={() => window.location.reload()} className="mt-5 rounded-full bg-white px-5 py-2.5 font-medium shadow-sm">Pokušaj ponovo</button>
+                </div>
+            </main>
         );
     }
 
     return (
-        <div className="flex flex-1 flex-col bg-white">
-
-            {/* HERO */}
-            <section className="w-full bg-[#bdebff]">
-                <div className="mx-auto w-full max-w-6xl px-6 py-14">
-
-                    <span className="mb-4 inline-block rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-zinc-700">
-                        Tvoj prostor za učenje
-                    </span>
-
-                    <h1 className="mb-3 text-4xl font-semibold text-zinc-900">
-                        Zdravo, {getVagabundoName()}! 👋
-                    </h1>
-
-                    <p className="text-zinc-700">
-                        Ovde možeš videti svoje podatke i kurseve kojima imaš pristup.
-                    </p>
-
+        <main className="flex-1 bg-[#fbfaff]">
+            <section className="bg-[#bdebff]">
+                <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-10 sm:px-8 sm:py-14 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <span className="mb-4 inline-flex rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-zinc-700">Tvoj prostor za učenje</span>
+                        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Zdravo{user ? `, ${getVagabundoName()}` : ""}! 👋</h1>
+                        <p className="mt-3 max-w-2xl text-zinc-700">Ovde ćeš moći da pratiš svoje prijave za kurseve i aktivnosti na njima.</p>
+                    </div>
+                    <Link href="/courses" className="inline-flex w-fit items-center justify-center rounded-full bg-white px-6 py-3 font-semibold text-zinc-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        Pogledaj kurseve <span className="ml-2">→</span>
+                    </Link>
                 </div>
             </section>
 
-            {/* CONTENT */}
-            <main className="mx-auto w-full max-w-6xl px-6 py-16">
+            <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-12">
+                <section aria-labelledby="my-courses-heading">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-purple-700">Tvoje učenje</p>
+                        <h2 id="my-courses-heading" className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">Moji kursevi</h2>
+                    </div>
 
-                <div className="grid gap-8 md:grid-cols-2">
-
-                    {/* USER INFO */}
-                    {user && (
-                        <section className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
-
-                            <div className="mb-6 flex items-center gap-4">
-
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#d8c6ff] font-semibold text-zinc-800">
-                                    {(user.firstName || user.username)
-                                        ?.charAt(0)
-                                        .toUpperCase()}
-                                </div>
-
-                                <div>
-                                    <h2 className="text-xl font-semibold text-zinc-900">
-                                        Podaci o korisniku
-                                    </h2>
-
-                                    <p className="text-sm text-zinc-500">
-                                        Tvoji osnovni podaci
-                                    </p>
-                                </div>
-
-                            </div>
-
-                            <div className="flex flex-col gap-4">
-
-                                <div className="rounded-2xl bg-zinc-50 p-4">
-                                    <p className="mb-1 text-xs font-medium text-zinc-400">
-                                        KORISNIČKO IME
-                                    </p>
-
-                                    <p className="font-medium text-zinc-800">
-                                        {user.username}
-                                    </p>
-                                </div>
-
-                                <div className="rounded-2xl bg-zinc-50 p-4">
-                                    <p className="mb-1 text-xs font-medium text-zinc-400">
-                                        EMAIL
-                                    </p>
-
-                                    <p className="font-medium text-zinc-800">
-                                        {user.email}
-                                    </p>
-                                </div>
-
-                                {(user.firstName || user.lastName) && (
-                                    <div className="rounded-2xl bg-zinc-50 p-4">
-                                        <p className="mb-1 text-xs font-medium text-zinc-400">
-                                            IME I PREZIME
-                                        </p>
-
-                                        <p className="font-medium text-zinc-800">
-                                            {user.firstName} {user.lastName}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {user.gender && (
-                                    <div className="rounded-2xl bg-zinc-50 p-4">
-                                        <p className="mb-1 text-xs font-medium text-zinc-400">
-                                            POL
-                                        </p>
-
-                                        <p className="font-medium text-zinc-800">
-                                            {user.gender.toLowerCase() === "female"
-                                                ? "Žensko"
-                                                : user.gender.toLowerCase() === "male"
-                                                    ? "Muško"
-                                                    : user.gender}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {user.phone && (
-                                    <div className="rounded-2xl bg-zinc-50 p-4">
-                                        <p className="mb-1 text-xs font-medium text-zinc-400">
-                                            TELEFON
-                                        </p>
-
-                                        <p className="font-medium text-zinc-800">
-                                            {user.phone}
-                                        </p>
-                                    </div>
-                                )}
-
-                            </div>
-
-                        </section>
-                    )}
-
-                    {/* MY COURSES */}
-                    <section className="rounded-3xl bg-[#fff3c2] p-8">
-
-                        <span className="mb-4 inline-block rounded-full bg-white/70 px-4 py-2 text-xs font-medium text-zinc-700">
-                            Moje učenje
-                        </span>
-
-                        <h2 className="mb-2 text-xl font-semibold text-zinc-900">
-                            Moji kursevi
-                        </h2>
-
-                        <p className="mb-6 text-zinc-700">
-                            Ovde će se prikazivati svi kursevi koje si kupila i kojima imaš pristup.
+                    <div className="mt-6 rounded-3xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff3c2] text-2xl" aria-hidden="true">📚</div>
+                        <h3 className="mt-4 text-lg font-semibold text-zinc-900">Prijavljeni kursevi će se prikazivati ovde</h3>
+                        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-zinc-600">
+                            Trenutno još nije dostupna veza sa bazom za prikaz tvojih prijava, dodeljenih profesora i napretka kroz lekcije. Ovi podaci će biti prikazani kada odgovarajući backend deo bude implementiran.
                         </p>
+                        <Link href="/courses" className="mt-5 inline-flex rounded-full bg-[#d8c6ff] px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-[#c9b0ff]">
+                            Pogledaj katalog kurseva →
+                        </Link>
+                    </div>
+                </section>
 
-                        {/* EMPTY STATE */}
-                        <div className="rounded-3xl bg-white/80 p-6">
-
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#d8c6ff]">
-                                📚
+                {user && (
+                    <section className="mt-12 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm sm:p-8">
+                        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d8c6ff] text-xl font-bold text-zinc-800">
+                                    {(user.firstName || user.username || "K").charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-zinc-900">Moji podaci</h2>
+                                    <p className="mt-1 text-sm text-zinc-500">{user.firstName || user.username} {user.lastName || ""}</p>
+                                </div>
                             </div>
-
-                            <h3 className="mb-2 font-semibold text-zinc-900">
-                                Još nemaš kupljenih kurseva
-                            </h3>
-
-                            <p className="mb-5 text-sm text-zinc-600">
-                                Kada kupiš svoj prvi kurs, on će se pojaviti upravo ovde.
-                            </p>
-
-                            <button
-                                onClick={() => router.push("/courses")}
-                                className="rounded-full bg-[#d8c6ff] px-5 py-3 text-sm font-medium text-zinc-900 transition hover:scale-[1.02] hover:shadow-md"
-                            >
-                                Istraži kurseve →
+                            <button onClick={handleLogout} className="w-fit rounded-full border border-zinc-200 px-5 py-2.5 text-sm font-semibold text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                                Odjavi se
                             </button>
-
                         </div>
 
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <div className="rounded-2xl bg-[#fbfaff] p-4">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Korisničko ime</p>
+                                <p className="mt-1 font-medium text-zinc-800">{user.username}</p>
+                            </div>
+                            <div className="rounded-2xl bg-[#fbfaff] p-4">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Email</p>
+                                <p className="mt-1 break-all font-medium text-zinc-800">{user.email}</p>
+                            </div>
+                            {(user.firstName || user.lastName) && (
+                                <div className="rounded-2xl bg-[#fbfaff] p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Ime i prezime</p>
+                                    <p className="mt-1 font-medium text-zinc-800">{user.firstName} {user.lastName}</p>
+                                </div>
+                            )}
+                            {user.phone && (
+                                <div className="rounded-2xl bg-[#fbfaff] p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Telefon</p>
+                                    <p className="mt-1 font-medium text-zinc-800">{user.phone}</p>
+                                </div>
+                            )}
+                        </div>
                     </section>
-
-                </div>
-
-                {/* LOGOUT */}
-                <div className="mt-12 border-t border-zinc-200 pt-8">
-
-                    <button
-                        onClick={handleLogout}
-                        className="rounded-full border border-zinc-300 bg-white px-6 py-3 font-medium text-zinc-700 transition hover:bg-zinc-100"
-                    >
-                        Odjavi se
-                    </button>
-
-                </div>
-
-            </main>
-
-        </div>
+                )}
+            </div>
+        </main>
     );
 }

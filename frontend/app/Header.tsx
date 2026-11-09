@@ -1,12 +1,14 @@
+
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "../src/hooks/useAuth";
 
 export default function Header() {
     const router = useRouter();
+    const pathname = usePathname();
 
     const {
         user,
@@ -15,15 +17,23 @@ export default function Header() {
         logout
     } = useAuth();
 
-    const [isMenuOpen, setIsMenuOpen] =
-        useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     function handleLogout() {
         logout();
-
         setIsMenuOpen(false);
-
         router.push("/");
+    }
+
+    function handleAboutClick(event: React.MouseEvent<HTMLAnchorElement>) {
+        if (pathname === "/") {
+            event.preventDefault();
+
+            document.getElementById("o-nama")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        }
     }
 
     function getVagabundoName() {
@@ -58,13 +68,21 @@ export default function Header() {
             <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
 
                 <Link
-                    href="/" 
-                    className="ext-zinc-800 font-bold underline-offset-4 transition hover:text-zinc-950 hover:underline"
+                    href="/"
+                    className="font-bold text-zinc-800 underline-offset-4 transition hover:text-zinc-950 hover:underline"
                 >
                     Español con Vagabundos
                 </Link>
 
                 <nav className="flex items-center gap-3 text-[15px] font-medium sm:gap-6">
+
+                    <Link
+                        href="/#o-nama"
+                        onClick={handleAboutClick}
+                        className="text-zinc-800 underline-offset-4 transition hover:text-zinc-950 hover:underline"
+                    >
+                        O nama
+                    </Link>
 
                     <Link
                         href="/courses"
@@ -77,9 +95,7 @@ export default function Header() {
                         <div className="relative">
 
                             <button
-                                onClick={() =>
-                                    setIsMenuOpen(!isMenuOpen)
-                                }
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
                                 className="flex items-center gap-2 rounded-full bg-white/60 px-3 py-1.5 text-zinc-800 transition hover:bg-white"
                             >
                                 <svg
@@ -91,9 +107,7 @@ export default function Header() {
                                     <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5.33 0-8 2.67-8 6v2h16v-2c0-3.33-2.67-6-8-6Z" />
                                 </svg>
 
-                                <span>
-                                    {getVagabundoName()}
-                                </span>
+                                <span>{getVagabundoName()}</span>
 
                                 <span className="text-xs">
                                     {isMenuOpen ? "▲" : "▼"}
@@ -105,9 +119,7 @@ export default function Header() {
 
                                     <Link
                                         href="/my-account"
-                                        onClick={() =>
-                                            setIsMenuOpen(false)
-                                        }
+                                        onClick={() => setIsMenuOpen(false)}
                                         className="block px-4 py-3 text-sm text-zinc-700 transition hover:bg-[#fff3c2]"
                                     >
                                         Moj nalog
