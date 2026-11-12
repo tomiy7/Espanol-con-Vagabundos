@@ -1,4 +1,5 @@
 ﻿using GroupsService.Domain;
+using GroupsService.Domain.Exceptions;
 using GroupsService.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +29,18 @@ public abstract class RepositoryBase<T> : IAsyncRepository<T> where T : Aggregat
     public void Delete(T entity) =>
         _dbContext.Set<T>().Remove(entity);
 
-    public async Task<bool> SaveChangesAsync() =>
-        await _dbContext.SaveChangesAsync() > 0;
+    public async Task<bool> SaveChangesAsync()
+    {
+        try
+        {
+            return await _dbContext.SaveChangesAsync() > 0;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Neko je izmenio isti agregat (npr. zadnje mesto u grupi) izmedju citanja
+            // i upisa. API ovo mapira kao domensku gresku (konflikt).
+            throw new GroupsDomainException(
+                "The data was changed in the meantime (e.g. the group just filled up). Please try again.");
+        }
+    }
 }

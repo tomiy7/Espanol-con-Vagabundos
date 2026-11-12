@@ -35,11 +35,20 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
         builder.Property(e => e.CancelledAt).HasColumnName("cancelled_at");
         builder.Property(e => e.CompletedAt).HasColumnName("completed_at");
 
-        // Najcesci upiti: "sve prijave korisnika", "ko je u ovoj grupi",
-        // "da li korisnik vec ima prijavu za ovaj kurs"
+        // Zamrzavanje: trenutak kad je zamrznut i ukupno vreme koje je vec proteklo u
+        // zamrznutom stanju (zaustavlja sat za otvaranje lekcija).
+        builder.Property(e => e.FrozenAt).HasColumnName("frozen_at");
+        builder.Property(e => e.TotalFrozenTime).HasColumnName("total_frozen_time").IsRequired();
+
+        // Najcesci upiti: "sve prijave korisnika", "ko je u ovoj grupi"
         builder.HasIndex(e => e.UserId);
         builder.HasIndex(e => e.GroupId);
-        builder.HasIndex(e => new { e.UserId, e.CourseId });
+
+        // Jedan neotkazan upis po korisniku i kursu - baza garantuje pravilo i kad dva
+        // zahteva stignu istovremeno (provera u EnrollmentGuard to ne moze sama).
+        builder.HasIndex(e => new { e.UserId, e.CourseId })
+            .IsUnique()
+            .HasFilter("\"status\" <> 'Cancelled'");
 
         // Napredak - owned kolekcija zavrsenih lekcija. Slozeni kljuc (enrollment,
         // lekcija) je i garancija idempotentnosti: dupli LessonCompleted event ne
@@ -54,7 +63,10 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
 
             l.HasKey("enrollment_id", nameof(CompletedLesson.LessonId));
         });
-        
+
+        builder.Metadata.FindNavigation(nameof(Enrollment.CompletedLessons))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
         builder.Ignore(e => e.CompletedLessonCount);
         builder.Ignore(e => e.DomainEvents);
 

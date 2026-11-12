@@ -43,15 +43,23 @@ public class GroupRepository : RepositoryBase<Group>, IGroupRepository
     // (frontend lista za pregled/pridruzivanje). Pair se formira preko mejl poziva
     // (invite-partner), a Individual je privatna 1-clana grupa (samo koordinacija
     // potvrde termina) - ni jedna od ove dve ne treba da se vidi kao "dostupna grupa".
+    // Dostupna je samo dok je otvorena (Forming/Ready), nije puna i rok formiranja nije
+    // istekao. MaxSize i FormationWindowExpired su computed svojstva koja EF ne moze da
+    // prevede u SQL, pa se ta dva filtera rade u memoriji (grupa po kursu je malo).
     public async Task<List<Group>> GetAvailableForCourseAsync(Guid courseId)
     {
         var groups = await _db.Groups
+            .AsNoTracking()
             .Include(g => g.Members)
             .Include(g => g.Slots)
-            .Where(g => g.CourseId == courseId && g.Type == GroupType.Group)
+            .Where(g => g.CourseId == courseId && g.Type == GroupType.Group
+                        && (g.Status == GroupStatus.Forming || g.Status == GroupStatus.Ready))
             .ToListAsync();
 
-        return groups.OrderBy(g => g.CreatedAt).ToList();
+        return groups
+            .Where(g => g.MemberCount < g.MaxSize && !g.FormationWindowExpired)
+            .OrderBy(g => g.CreatedAt)
+            .ToList();
     }
 
     public async Task<bool> HasConflictingSlotAsync(
@@ -60,7 +68,8 @@ public class GroupRepository : RepositoryBase<Group>, IGroupRepository
         // Direktan upit nad slot kolekcijom (owned tabela group_slots) - ne ucitava
         // cele Group agregate (Members i sl.) samo da bi se provirila jedna kolona.
         return await _db.Groups
-            .Where(g => g.Id != excludeGroupId && g.Status != GroupStatus.Completed)
+            .Where(g => g.Id != excludeGroupId
+                        && g.Status != GroupStatus.Completed && g.Status != GroupStatus.Dissolved)
             .SelectMany(g => g.Slots)
             .AnyAsync(s => s.ProfessorId == professorId && s.DayOfWeek == dayOfWeek && s.Time == time);
     }
