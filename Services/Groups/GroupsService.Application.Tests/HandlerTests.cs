@@ -21,25 +21,19 @@ public class HandlerTests
     private readonly FakeEnrollmentRepository _enrollments = new();
     private readonly FakeGroupRepository _groups = new();
     private readonly FakeInvitationRepository _invitations = new();
-    private readonly IUserDirectory _users = Substitute.For<IUserDirectory>();
-    private readonly ICourseDirectory _courses = Substitute.For<ICourseDirectory>();
-    private readonly INotificationService _notifications = Substitute.For<INotificationService>();
     private readonly IOptions<EnrollmentOptions> _options = Microsoft.Extensions.Options.Options.Create(new EnrollmentOptions());
     private readonly Guid _courseId = Guid.NewGuid();
 
+    // Notifikacije jos nisu u repou (TODO u handlerima), pa ih testovi ne prosledjuju.
     private CancelEnrollmentHandler Cancel() => new(_enrollments, _groups);
 
-    private JoinGroupHandler Join() => new(_enrollments, _groups, _users, _courses, _notifications,
-        NullLogger<JoinGroupHandler>.Instance);
+    private JoinGroupHandler Join() => new(_enrollments, _groups, NullLogger<JoinGroupHandler>.Instance);
 
-    private StartGroupHandler Start() => new(_groups, _enrollments, _users, _courses, _notifications,
-        NullLogger<StartGroupHandler>.Instance);
+    private StartGroupHandler Start() => new(_groups, _enrollments);
 
-    private InvitePartnerHandler Invite() => new(_enrollments, _invitations, _users, _courses, _notifications,
-        _options, NullLogger<InvitePartnerHandler>.Instance);
+    private InvitePartnerHandler Invite() => new(_enrollments, _invitations, _options);
 
-    private AcceptInvitationHandler Accept() => new(_invitations, _enrollments, _groups, _users, _courses,
-        _notifications, NullLogger<AcceptInvitationHandler>.Instance);
+    private AcceptInvitationHandler Accept() => new(_invitations, _enrollments, _groups);
 
     private RecordLessonCompletedHandler Record() => new(_enrollments, _groups,
         NullLogger<RecordLessonCompletedHandler>.Instance);
@@ -286,8 +280,7 @@ public class HandlerTests
     private async Task<Enrollment> CreateIndividual()
     {
         var handler = new Commands.CreateIndividualEnrollment.CreateIndividualEnrollmentHandler(
-            _enrollments, _groups, _users, _courses, _notifications,
-            NullLogger<Commands.CreateIndividualEnrollment.CreateIndividualEnrollmentHandler>.Instance);
+            _enrollments, _groups);
 
         await handler.Handle(new Commands.CreateIndividualEnrollment.CreateIndividualEnrollmentCommand(
             Guid.NewGuid(), _courseId, Guid.NewGuid()));
