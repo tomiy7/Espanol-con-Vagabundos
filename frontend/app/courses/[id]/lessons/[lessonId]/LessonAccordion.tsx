@@ -1,8 +1,13 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Lesson } from "./page";
+import {
+    useLessonProgress,
+    type LessonSectionsMap,
+} from "../../../../../src/features/progress/hooks/useLessonProgress";
 
 type ListItem = {
     content: string;
@@ -21,10 +26,16 @@ type Block = {
 
 type Section = {
     id: string;
+    lesson_id: string | number | { id: string | number };
     title: string;
     content: { blocks?: Block[] } | null;
     order: number;
 };
+
+function getLessonId(value: Section["lesson_id"]): string {
+    if (typeof value === "object" && value !== null) return String(value.id);
+    return String(value);
+}
 
 function getYouTubeEmbedUrl(url: string): string | null {
     try {
@@ -137,6 +148,24 @@ function renderBlocks(blocks: Block[] = []): React.ReactNode {
     });
 }
 
+function ProgressBar({ percentage }: { percentage: number }) {
+    return (
+        <div
+            className="h-2 overflow-hidden rounded-full bg-purple-100"
+            role="progressbar"
+            aria-label="Progres"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percentage}
+        >
+            <div
+                className="h-full rounded-full bg-purple-600 transition-all duration-300"
+                style={{ width: `${percentage}%` }}
+            />
+        </div>
+    );
+}
+
 export default function LessonAccordion({
                                             lessons,
                                             courseId,
@@ -148,10 +177,25 @@ export default function LessonAccordion({
 }) {
     const router = useRouter();
     const [sections, setSections] = useState<Section[]>([]);
+    const [lessonSections, setLessonSections] = useState<LessonSectionsMap>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
-    // Ucitaj sekcije cim se otvori lekcija (i kad se promeni lekcija)
+    const lessonIdsKey = useMemo(
+        () => lessons.map((lesson) => lesson.id).sort().join(","),
+        [lessons]
+    );
+
+    const {
+        completedSectionIds,
+        lessonProgressById,
+        canTrackProgress,
+        markSectionCompleted,
+        markSectionIncomplete,
+    } = useLessonProgress(courseId, lessonSections);
+
+    // Ucitavamo sekcije svih lekcija da bismo mogli da izracunamo i progres kursa.
+    // Sadrzaj sekcija prikazujemo samo za trenutno otvorenu lekciju.
     useEffect(() => {
         let cancelled = false;
 
@@ -160,22 +204,52 @@ export default function LessonAccordion({
             setError(false);
             setSections([]);
 
+            if (!lessonIdsKey) {
+                setLessonSections({});
+                setLoading(false);
+                return;
+            }
+
             try {
                 const query = new URLSearchParams({
-                    "filter[lesson_id][_eq]": currentLessonId,
+                    "filter[lesson_id][_in]": lessonIdsKey,
                     sort: "order",
                 });
 
-                const res = await fetch(
+                const response = await fetch(
                     `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/sections?${query}`
                 );
 
-                if (!res.ok) throw new Error("Failed to load sections");
+                if (!response.ok) throw new Error("Failed to load sections");
 
-                const json = await res.json();
-                if (!cancelled) setSections(json.data ?? []);
+                const json = await response.json();
+                const allSections = (json.data ?? []) as Section[];
+                const nextMap: LessonSectionsMap = Object.fromEntries(
+                    lessons.map((lesson) => [lesson.id, []])
+                );
+
+                for (const section of allSections) {
+                    const lessonId = getLessonId(section.lesson_id);
+                    if (nextMap[lessonId]) {
+                        nextMap[lessonId].push(String(section.id));
+                    }
+                }
+
+                if (!cancelled) {
+                    setLessonSections(nextMap);
+                    setSections(
+                        allSections
+                            .filter((section) => getLessonId(section.lesson_id) === currentLessonId)
+                            .sort((a, b) => a.order - b.order)
+                    );
+                }
             } catch {
-                if (!cancelled) setError(true);
+                if (!cancelled) {
+                    setError(true);
+                    setLessonSections(
+                        Object.fromEntries(lessons.map((lesson) => [lesson.id, []]))
+                    );
+                }
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -186,7 +260,7 @@ export default function LessonAccordion({
         return () => {
             cancelled = true;
         };
-    }, [currentLessonId]);
+    }, [currentLessonId, lessonIdsKey, lessons]);
 
     function selectLesson(lesson: Lesson) {
         if (lesson.id !== currentLessonId) {
@@ -194,10 +268,22 @@ export default function LessonAccordion({
         }
     }
 
+    const currentLessonProgress = lessonProgressById[currentLessonId] ?? {
+        completedCount: 0,
+        totalCount: 0,
+        percentage: 0,
+    };
+
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
             {lessons.map((lesson) => {
                 const isOpen = lesson.id === currentLessonId;
+                const progress = lessonProgressById[lesson.id] ?? {
+                    completedCount: 0,
+                    totalCount: 0,
+                    percentage: 0,
+                };
+                const isCompleted = progress.totalCount > 0 && progress.percentage === 100;
                 const embedUrl = lesson.recording_url
                     ? getYouTubeEmbedUrl(lesson.recording_url)
                     : null;
@@ -217,12 +303,26 @@ export default function LessonAccordion({
                             aria-expanded={isOpen}
                             className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-purple-50/50 sm:p-5"
                         >
-                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 font-semibold text-purple-800">
-                                {lesson.order}
+                            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-semibold ${
+                                isCompleted
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-purple-100 text-purple-800"
+                            }`}>
+                                {isCompleted ? "✓" : lesson.order}
                             </span>
 
                             <span className="min-w-0 flex-1 font-medium text-zinc-900">
                                 {lesson.title}
+                            </span>
+
+                            <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${
+                                isCompleted
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : progress.percentage > 0
+                                        ? "bg-purple-50 text-purple-700"
+                                        : "bg-zinc-100 text-zinc-600"
+                            }`}>
+                                {loading ? "..." : `${progress.percentage}%`}
                             </span>
 
                             <span className="text-xl text-zinc-400">
@@ -266,6 +366,21 @@ export default function LessonAccordion({
                                     </div>
                                 )}
 
+                                <div className="mb-5 rounded-xl bg-purple-50 p-4">
+                                    <div className="mb-2 flex items-center justify-between gap-3">
+                                        <p className="text-sm font-semibold text-zinc-900">
+                                            Progres ove lekcije
+                                        </p>
+                                        <p className="text-sm font-semibold text-purple-700 tabular-nums">
+                                            {currentLessonProgress.percentage}%
+                                        </p>
+                                    </div>
+                                    <ProgressBar percentage={currentLessonProgress.percentage} />
+                                    <p className="mt-2 text-xs text-zinc-600">
+                                        {currentLessonProgress.completedCount} od {currentLessonProgress.totalCount} sekcija završeno
+                                    </p>
+                                </div>
+
                                 {loading && (
                                     <p className="py-4 text-sm text-zinc-500">
                                         Učitavanje sadržaja...
@@ -279,17 +394,56 @@ export default function LessonAccordion({
                                 )}
 
                                 {!loading && !error && (
-                                    <div className="flex flex-col gap-6 text-zinc-700">
-                                        {sections.map((section) => (
-                                            <section key={section.id}>
-                                                <h3 className="mb-3 text-lg font-semibold text-zinc-900">
-                                                    {section.title}
-                                                </h3>
-                                                {renderBlocks(
-                                                    section.content?.blocks
-                                                )}
-                                            </section>
-                                        ))}
+                                    <div className="flex flex-col gap-5 text-zinc-700">
+                                        {sections.map((section) => {
+                                            const isSectionCompleted = completedSectionIds.includes(String(section.id));
+
+                                            return (
+                                                <section
+                                                    key={section.id}
+                                                    className="rounded-xl border border-zinc-200 p-4 sm:p-5"
+                                                >
+                                                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                                        <h3 className="text-lg font-semibold text-zinc-900">
+                                                            {section.title}
+                                                        </h3>
+                                                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                                            isSectionCompleted
+                                                                ? "bg-emerald-50 text-emerald-700"
+                                                                : "bg-zinc-100 text-zinc-600"
+                                                        }`}>
+                                                            {isSectionCompleted ? "Završena" : "Nije završena"}
+                                                        </span>
+                                                    </div>
+
+                                                    {renderBlocks(section.content?.blocks)}
+
+                                                    {canTrackProgress ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                isSectionCompleted
+                                                                    ? markSectionIncomplete(String(section.id))
+                                                                    : markSectionCompleted(String(section.id))
+                                                            }
+                                                            className={`mt-3 rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                                                                isSectionCompleted
+                                                                    ? "border border-zinc-300 text-zinc-700 hover:bg-zinc-50"
+                                                                    : "bg-purple-600 text-white hover:bg-purple-700"
+                                                            }`}
+                                                        >
+                                                            {isSectionCompleted
+                                                                ? "Vrati sekciju na nezavršeno"
+                                                                : "Označi sekciju kao završenu"}
+                                                        </button>
+                                                    ) : (
+                                                        <p className="mt-3 text-sm text-zinc-500">
+                                                            Prijavi se da bi mogla da pratiš svoj napredak.
+                                                        </p>
+                                                    )}
+                                                </section>
+                                            );
+                                        })}
 
                                         {sections.length === 0 && (
                                             <p className="text-sm text-zinc-500">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 type User = {
+    id?: string;
     username?: string;
     firstName?: string;
     lastName?: string;
@@ -37,9 +38,18 @@ function decodeToken(token: string): User | null {
         console.log("JWT PAYLOAD:", payload);
 
         return {
+            id:
+                payload.sub ||
+                payload.userId ||
+                payload.user_id ||
+                payload.id ||
+                payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
+
             username:
                 payload.username ||
                 payload.unique_name ||
+                payload.preferred_username ||
+                payload.email ||
                 payload[
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
                     ],
