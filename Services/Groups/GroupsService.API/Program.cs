@@ -129,6 +129,9 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 
+// Provera zdravlja za Docker/CI/smoke testove: API je gore i baza je dostupna.
+builder.Services.AddHealthChecks().AddDbContextCheck<GroupDbContext>();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -165,6 +168,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.Run();
 // Potrebno da WebApplicationFactory<Program> iz integracionih testova moze da pokrene API.

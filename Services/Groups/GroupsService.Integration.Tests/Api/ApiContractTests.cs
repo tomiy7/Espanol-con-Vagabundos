@@ -11,6 +11,15 @@ public class ApiContractTests : ApiTestBase
     public ApiContractTests(ApiFactory factory) : base(factory) { }
 
     [IntegrationFact]
+    public async Task Health_endpoint_is_anonymous_and_checks_the_database()
+    {
+        var response = await Get(null, "/health");
+
+        await AssertStatus(HttpStatusCode.OK, response);
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+    }
+
+    [IntegrationFact]
     public async Task Business_errors_are_problem_details_with_a_stable_code()
     {
         var professor = TestUser.Professor();

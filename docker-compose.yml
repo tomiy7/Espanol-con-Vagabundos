@@ -18,6 +18,12 @@ services:
   groupsdb:
     image: postgres:16
 
+  groups.api:
+    image: groups.api
+    build:
+      context: .
+      dockerfile: Services/Groups/GroupsService.API/Dockerfile
+
 volumes:
   auth_data:
   courses_data:
