@@ -1,4 +1,5 @@
 ﻿using GroupsService.Domain.Entities;
+using GroupsService.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -48,7 +49,9 @@ public class GroupConfiguration : IEntityTypeConfiguration<Group>
             m.Property(x => x.EnrollmentId).HasColumnName("enrollment_id").IsRequired();
             m.Property(x => x.JoinedAt).HasColumnName("joined_at").IsRequired();
 
-            m.HasIndex("group_id", "enrollment_id").IsUnique();
+            // Indeks se zadaje po imenu SVOJSTVA (EnrollmentId), ne po imenu kolone;
+            // "group_id" je shadow svojstvo definisano preko HasForeignKey iznad.
+            m.HasIndex("group_id", nameof(GroupMember.EnrollmentId)).IsUnique();
 
             m.Ignore(x => x.CreatedBy);
             m.Ignore(x => x.CreatedDate);
@@ -73,7 +76,7 @@ public class GroupConfiguration : IEntityTypeConfiguration<Group>
             s.Property(x => x.Time).HasColumnName("time");
             s.Property(x => x.ProfessorId).HasColumnName("professor_id");
 
-            s.HasIndex("group_id", "slot_index").IsUnique();
+            s.HasIndex("group_id", nameof(Slot.SlotIndex)).IsUnique();
 
             s.Ignore(x => x.CreatedBy);
             s.Ignore(x => x.CreatedDate);

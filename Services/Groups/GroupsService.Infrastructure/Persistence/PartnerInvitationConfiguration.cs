@@ -32,6 +32,10 @@ public class PartnerInvitationConfiguration : IEntityTypeConfiguration<PartnerIn
 
         builder.HasIndex(i => new { i.InviterEnrollmentId, i.InviteeUserId });
 
+        // Isto kao kod upisa (xmin): prihvatanje i odbijanje istog poziva u isto vreme
+        // ne mogu oba da prodju.
+        builder.Property<uint>(ConcurrencyTokens.RowVersion).IsRowVersion();
+
         builder.Ignore(i => i.DomainEvents);
         builder.Ignore(i => i.IsExpired);
 

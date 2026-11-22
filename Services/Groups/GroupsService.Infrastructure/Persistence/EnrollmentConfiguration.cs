@@ -50,24 +50,12 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
             .IsUnique()
             .HasFilter("\"status\" <> 'Cancelled'");
 
-        // Napredak - owned kolekcija zavrsenih lekcija. Slozeni kljuc (enrollment,
-        // lekcija) je i garancija idempotentnosti: dupli LessonCompleted event ne
-        // moze da upise istu lekciju dvaput ni u trci dva paralelna handlera.
-        builder.OwnsMany(e => e.CompletedLessons, l =>
-        {
-            l.ToTable("enrollment_completed_lessons");
-            l.WithOwner().HasForeignKey("enrollment_id");
+        // Optimisticka konkurentnost preko Postgres sistemske kolone xmin (menja se pri
+        // svakom upisu reda, nova kolona se ne dodaje). Dve paralelne izmene istog upisa
+        // (npr. otkazivanje i zamrzavanje) ne mogu obe da prodju: druga dobija konflikt
+        // umesto da tiho pregazi prvu i ostavi nekonzistentno stanje.
+        builder.Property<uint>(ConcurrencyTokens.RowVersion).IsRowVersion();
 
-            l.Property(x => x.LessonId).HasColumnName("lesson_id").ValueGeneratedNever();
-            l.Property(x => x.CompletedAt).HasColumnName("completed_at").IsRequired();
-
-            l.HasKey("enrollment_id", nameof(CompletedLesson.LessonId));
-        });
-
-        builder.Metadata.FindNavigation(nameof(Enrollment.CompletedLessons))!
-            .SetPropertyAccessMode(PropertyAccessMode.Field);
-
-        builder.Ignore(e => e.CompletedLessonCount);
         builder.Ignore(e => e.DomainEvents);
 
         builder.Ignore(e => e.CreatedBy);
