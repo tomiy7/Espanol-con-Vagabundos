@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Application.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Domain.Tests", "Services\Groups\GroupsService.Domain.Tests\GroupsService.Domain.Tests.csproj", "{0965D988-6CE7-4132-A3DF-44F8F604AFE6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupsService.Integration.Tests", "Services\Groups\GroupsService.Integration.Tests\GroupsService.Integration.Tests.csproj", "{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -126,6 +128,18 @@ Global
 		{0965D988-6CE7-4132-A3DF-44F8F604AFE6}.Release|x64.Build.0 = Release|Any CPU
 		{0965D988-6CE7-4132-A3DF-44F8F604AFE6}.Release|x86.ActiveCfg = Release|Any CPU
 		{0965D988-6CE7-4132-A3DF-44F8F604AFE6}.Release|x86.Build.0 = Release|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Debug|x64.Build.0 = Debug|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Debug|x86.Build.0 = Debug|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Release|x64.ActiveCfg = Release|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Release|x64.Build.0 = Release|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Release|x86.ActiveCfg = Release|Any CPU
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -134,5 +148,6 @@ Global
 		{507BBDC4-EEDA-8083-F64B-F4C1872D2DCC} = {5854FF58-B8C5-05C6-5BF2-ACE42193F22B}
 		{BE620C9C-A652-495D-A9DA-D32750B42CC2} = {507BBDC4-EEDA-8083-F64B-F4C1872D2DCC}
 		{0965D988-6CE7-4132-A3DF-44F8F604AFE6} = {507BBDC4-EEDA-8083-F64B-F4C1872D2DCC}
+		{37633099-A7DA-4F1F-A0FE-C9FB5620A9D9} = {507BBDC4-EEDA-8083-F64B-F4C1872D2DCC}
 	EndGlobalSection
 EndGlobal

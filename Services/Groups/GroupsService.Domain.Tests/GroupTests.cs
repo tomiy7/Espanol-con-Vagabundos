@@ -64,6 +64,20 @@ public class GroupTests
     }
 
     [Fact]
+    public void Member_completing_the_course_bumps_the_version_so_parallel_completions_conflict()
+    {
+        var g = GroupWithSlots(0);
+        var enrollmentId = Guid.NewGuid();
+        g.AddMember(enrollmentId);
+        var before = g.Version;
+
+        g.RecordMemberCompleted(enrollmentId);
+
+        Assert.Equal(before + 1, g.Version);
+        Assert.Throws<GroupsDomainException>(() => g.RecordMemberCompleted(Guid.NewGuid()));
+    }
+
+    [Fact]
     public void Removing_member_below_minimum_moves_ready_group_back_to_forming()
     {
         var g = Group.CreateGroup(Guid.NewGuid(), 7);
