@@ -15,7 +15,7 @@ public class UnfreezeEnrollmentHandler
     public async Task Handle(UnfreezeEnrollmentCommand command)
     {
         var enrollment = await _repository.GetByIdAsync(command.EnrollmentId)
-            ?? throw new GroupsDomainException($"Enrollment with id {command.EnrollmentId} does not exist.");
+            ?? throw EntityNotFoundException.Enrollment(command.EnrollmentId);
 
         enrollment.Unfreeze();
         await _repository.SaveChangesAsync();

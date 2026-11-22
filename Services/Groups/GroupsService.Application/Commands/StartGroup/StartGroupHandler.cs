@@ -20,7 +20,7 @@ public class StartGroupHandler
     public async Task Handle(StartGroupCommand command)
     {
         var group = await _groupRepository.GetByIdAsync(command.GroupId)
-            ?? throw new GroupsDomainException($"Group with id {command.GroupId} does not exist.");
+            ?? throw EntityNotFoundException.Group(command.GroupId);
 
         group.Start(command.Force, command.UnlockStartsAt);
 

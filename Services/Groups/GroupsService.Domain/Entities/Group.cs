@@ -221,7 +221,7 @@ public class Group : AggregateRoot
     }
 
     // Zatvaranje grupe. Poziva se (1) automatski kad svi clanovi koji nisu otkazali
-    // zavrse kurs (RecordLessonCompletedHandler), ili (2) rucno od admina/profesora
+    // zavrse kurs (CourseCompletedHandler), ili (2) rucno od admina/profesora
     // (CompleteGroupHandler). Samo Active grupa moze da se zavrsi - Forming/Ready
     // grupa jos nije ni pocela.
     public void Complete()
@@ -234,6 +234,18 @@ public class Group : AggregateRoot
 
         Status = GroupStatus.Completed;
         AddDomainEvent(new GroupCompleted(Id));
+    }
+
+    // Clan je zavrsio kurs. Sadrzaj grupe se ne menja, ali se Version povecava da bi
+    // dva istovremena zavrsetka (npr. poslednja dva clana) bila serijalizovana: drugi upis
+    // dobija konflikt, ponavlja se, vidi prvog kao zavrsenog i zatvara grupu. Bez ovoga
+    // svaki vidi onog drugog kao aktivnog i grupa ostaje otvorena zauvek.
+    public void RecordMemberCompleted(Guid enrollmentId)
+    {
+        if (!HasMember(enrollmentId))
+            throw new GroupsDomainException("Enrollment is not a member of this group.");
+
+        Version++;
     }
 
     public bool HasMember(Guid enrollmentId) => _members.Any(m => m.EnrollmentId == enrollmentId);

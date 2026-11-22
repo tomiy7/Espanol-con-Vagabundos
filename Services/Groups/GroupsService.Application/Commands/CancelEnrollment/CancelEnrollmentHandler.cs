@@ -19,8 +19,7 @@ public class CancelEnrollmentHandler
     public async Task Handle(CancelEnrollmentCommand command)
     {
         var enrollment = await _enrollmentRepository.GetByIdAsync(command.EnrollmentId)
-            ?? throw new GroupsDomainException(
-                $"Enrollment with id {command.EnrollmentId} does not exist.");
+            ?? throw EntityNotFoundException.Enrollment(command.EnrollmentId);
 
         if (!command.IsStaff && enrollment.UserId != command.RequestingUserId)
             throw new GroupsDomainException("You can only cancel your own enrollment.");
@@ -35,7 +34,7 @@ public class CancelEnrollmentHandler
         if (groupId.HasValue)
         {
             var group = await _groupRepository.GetByIdAsync(groupId.Value)
-                        ?? throw new GroupsDomainException($"Group with id {groupId.Value} does not exist.");
+                        ?? throw EntityNotFoundException.Group(groupId.Value);
 
             var wasReady = group.Status == GroupStatus.Ready;
             group.RemoveMember(enrollment.Id);
@@ -69,7 +68,11 @@ public class CancelEnrollmentHandler
         if (group.Status is not (GroupStatus.Forming or GroupStatus.Ready))
             return; // Completed/Dissolved grupa ostaje kakva jeste
 
-        var remaining = await _enrollmentRepository.GetByGroupIdAsync(group.Id);
+        // Upit ide u bazu, gde otkazani upis jos uvek ima GroupId (promena nije snimljena),
+        // pa ga ovde izuzimamo po statusu - inace bismo ga "vratili" u Searching.
+        var remaining = (await _enrollmentRepository.GetByGroupIdAsync(group.Id))
+            .Where(m => m.Status != EnrollmentStatus.Cancelled)
+            .ToList();
 
         if (group.Type is GroupType.Pair or GroupType.Individual)
         {

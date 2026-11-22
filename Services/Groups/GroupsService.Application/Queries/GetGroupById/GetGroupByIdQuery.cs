@@ -6,13 +6,12 @@ namespace GroupsService.Application.Queries.GetGroupById;
 public record GetGroupByIdQuery(Guid GroupId);
 
 // Clan grupe za profesora/admina: upis, korisnik (ime iz Auth-a, prazno ako nije
-// dostupno), status upisa i napredak.
+// dostupno) i status upisa. Napredak po lekcijama vodi Courses.
 public record GroupMemberDto(
     Guid EnrollmentId,
     Guid UserId,
     string? FullName,
-    EnrollmentStatus Status,
-    int CompletedLessons);
+    EnrollmentStatus Status);
 
 public record GroupDetailDto(
     Guid Id,

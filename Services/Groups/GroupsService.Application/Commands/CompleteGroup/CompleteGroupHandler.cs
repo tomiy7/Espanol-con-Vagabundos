@@ -22,7 +22,7 @@ public class CompleteGroupHandler
     public async Task Handle(CompleteGroupCommand command)
     {
         var group = await _groupRepository.GetByIdAsync(command.GroupId)
-            ?? throw new GroupsDomainException($"Group with id {command.GroupId} does not exist.");
+            ?? throw EntityNotFoundException.Group(command.GroupId);
 
         group.Complete();
 

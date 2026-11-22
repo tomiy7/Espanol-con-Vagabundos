@@ -12,11 +12,16 @@ namespace GroupsService.Application.Commands.CreateGroup;
 public class CreateGroupHandler
 {
     private readonly IGroupRepository _groupRepository;
+    private readonly IProfessorScheduleLock _scheduleLock;
     private readonly EnrollmentOptions _options;
 
-    public CreateGroupHandler(IGroupRepository groupRepository, IOptions<EnrollmentOptions> options)
+    public CreateGroupHandler(
+        IGroupRepository groupRepository,
+        IProfessorScheduleLock scheduleLock,
+        IOptions<EnrollmentOptions> options)
     {
         _groupRepository = groupRepository;
+        _scheduleLock = scheduleLock;
         _options = options.Value;
     }
 
@@ -36,6 +41,9 @@ public class CreateGroupHandler
 
         // NAPOMENA: ne proveravamo da ProfessorId stvarno ima professor rolu u Auth-u -
         // ostaje tech debt, isto kao kod Individual upisa.
+        // Provera konflikta i upis termina moraju biti atomicni za ove profesore.
+        await using var scheduleLock = await _scheduleLock.AcquireAsync(command.Slots.Select(s => s.ProfessorId));
+
         var group = Group.CreateGroup(command.CourseId, command.FormationWindowDays ?? _options.GroupFormationWindowDays);
 
         for (var i = 0; i < command.Slots.Count; i++)
@@ -55,6 +63,7 @@ public class CreateGroupHandler
 
         await _groupRepository.AddAsync(group);
         await _groupRepository.SaveChangesAsync();
+        await scheduleLock.CommitAsync();
 
         return new CreateGroupResult(group.Id);
     }

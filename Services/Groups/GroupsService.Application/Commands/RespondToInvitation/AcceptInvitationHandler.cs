@@ -24,7 +24,7 @@ public class AcceptInvitationHandler
     public async Task<AcceptInvitationResult> Handle(AcceptInvitationCommand command)
     {
         var invitation = await _invitationRepository.GetByTokenAsync(command.Token)
-            ?? throw new GroupsDomainException("Invitation not found.");
+            ?? throw EntityNotFoundException.Invitation();
 
         var inviterEnrollment = await _enrollmentRepository.GetByIdAsync(invitation.InviterEnrollmentId)
             ?? throw new GroupsDomainException("Inviter enrollment no longer exists.");

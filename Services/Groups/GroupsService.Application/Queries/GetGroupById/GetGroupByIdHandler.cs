@@ -34,7 +34,7 @@ public class GetGroupByIdHandler
             var contact = await _userDirectory.GetUserContactAsync(enrollment.UserId);
             members.Add(new GroupMemberDto(
                 enrollment.Id, enrollment.UserId, contact?.FullName,
-                enrollment.Status, enrollment.CompletedLessonCount));
+                enrollment.Status));
         }
 
         return new GroupDetailDto(

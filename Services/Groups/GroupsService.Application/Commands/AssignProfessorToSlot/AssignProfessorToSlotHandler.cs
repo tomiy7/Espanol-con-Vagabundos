@@ -6,20 +6,23 @@ namespace GroupsService.Application.Commands.AssignProfessorToSlot;
 public class AssignProfessorToSlotHandler
 {
     private readonly IGroupRepository _groupRepository;
-    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IProfessorScheduleLock _scheduleLock;
 
     public AssignProfessorToSlotHandler(
         IGroupRepository groupRepository,
-        IEnrollmentRepository enrollmentRepository)
+        IProfessorScheduleLock scheduleLock)
     {
         _groupRepository = groupRepository;
-        _enrollmentRepository = enrollmentRepository;
+        _scheduleLock = scheduleLock;
     }
     
     public async Task Handle(AssignProfessorToSlotCommand command)
     {
         var group = await _groupRepository.GetByIdAsync(command.GroupId)
-            ?? throw new GroupsDomainException($"Group with id {command.GroupId} does not exist.");
+            ?? throw EntityNotFoundException.Group(command.GroupId);
+
+        // Provera konflikta i upis termina moraju biti atomicni za ovog profesora.
+        await using var scheduleLock = await _scheduleLock.AcquireAsync([command.ProfessorId]);
 
         // Nivo 1 zastita od duplog zakazivanja - vidi komentar na HasConflictingSlotAsync.
         // NAPOMENA: ovo je provera na DayOfWeek+Time pravilu, ne na konkretnom datumu -
@@ -35,6 +38,7 @@ public class AssignProfessorToSlotHandler
         group.AssignProfessorToSlot(
             command.SlotIndex, command.DayOfWeek, command.Time, command.ProfessorId, allowReassign: command.IsAdmin);
         await _groupRepository.SaveChangesAsync();
+        await scheduleLock.CommitAsync();
         
         // TODO notifikacija
     }

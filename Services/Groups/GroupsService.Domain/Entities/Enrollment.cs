@@ -36,12 +36,9 @@ public class Enrollment : AggregateRoot
     public DateTime? FrozenAt { get; private set; }
     public TimeSpan TotalFrozenTime { get; private set; }
 
-    // Napredak kroz kurs - system of record je OVDE (ne u Courses). Popunjava se iz
-    // LessonCompleted event-a (vidi RecordLessonCompleted). Zamrznut upis stoji
-    // gde je stao jer RecordLessonCompleted prihvata samo Active upise.
-    private readonly List<CompletedLesson> _completedLessons = new();
-    public IReadOnlyCollection<CompletedLesson> CompletedLessons => _completedLessons.AsReadOnly();
-    public int CompletedLessonCount => _completedLessons.Count;
+    // Napredak po lekcijama vodi Courses (po upisu). Ovde se cuva samo cinjenica da je
+    // kurs zavrsen (Status Completed + CompletedAt), koju Courses javlja CourseCompleted
+    // event-om (vidi CourseCompletedHandler).
 
     private Enrollment() { }
 
@@ -164,31 +161,6 @@ public class Enrollment : AggregateRoot
         Status = EnrollmentStatus.Completed;
         CompletedAt = DateTime.UtcNow;
         AddDomainEvent(new EnrollmentCompleted(Id));
-    }
-
-    // Jedina tacka kroz koju se menja napredak. Vraca true ako je lekcija NOVO
-    // zabelezena, false ako je vec bila (event moze da stigne vise puta - isporuka
-    // iz RabbitMQ-a je "bar jednom", pa mora biti idempotentno). Kad broj zavrsenih
-    // lekcija dostigne totalLessons (poslednja lekcija je zavrsni test), upis se
-    // sam zavrsava. Frozen/Cancelled/Searching upis NE napreduje - baca izuzetak,
-    // a handler to proverava unapred pa ga samo loguje i ignorise.
-    public bool RecordLessonCompleted(Guid lessonId, int totalLessons)
-    {
-        if (totalLessons <= 0)
-            throw new GroupsDomainException("Total lessons must be positive.");
-
-        if (Status != EnrollmentStatus.Active)
-            throw new GroupsDomainException($"Cannot record progress for enrollment in status {Status}.");
-
-        if (_completedLessons.Any(l => l.LessonId == lessonId))
-            return false;
-
-        _completedLessons.Add(new CompletedLesson(lessonId, DateTime.UtcNow));
-
-        if (_completedLessons.Count >= totalLessons)
-            Complete();
-
-        return true;
     }
 
     // Napomena: ovde se NE racuna penal - to je Payments-ova odgovornost (faza 2),

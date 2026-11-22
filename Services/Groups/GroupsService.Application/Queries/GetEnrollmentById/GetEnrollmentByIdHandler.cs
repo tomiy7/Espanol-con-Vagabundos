@@ -26,7 +26,6 @@ public class GetEnrollmentByIdHandler
             GroupId: enrollment.GroupId,
             CreatedAt: enrollment.CreatedAt,
             ActivatedAt: enrollment.ActivatedAt,
-            CompletedAt: enrollment.CompletedAt,
-            CompletedLessons: enrollment.CompletedLessonCount);
+            CompletedAt: enrollment.CompletedAt);
     }
 }

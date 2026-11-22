@@ -25,8 +25,8 @@ public class CheckAccessHandler
         // Odgovara na "da li ovaj korisnik ima pristup ovom kursu" - poziva ga Courses
         // servis sa GET /courses/{id}/access (taj endpoint tamo jos uvek ne postoji,
         // trenutno je stub koji uvek vraca false - vidi napomene u KT dokumentu).
-        // Odgovor nosi i EnrollmentId upisa koji daje pristup - Courses ga stavlja u
-        // LessonCompleted event.
+        // Odgovor nosi i EnrollmentId upisa koji daje pristup - Courses po njemu vodi
+        // napredak i stavlja ga u CourseCompleted event.
         var enrollments = await _repository.GetByUserIdAsync(query.UserId);
 
         var granting = enrollments.FirstOrDefault(e => e.CourseId == query.CourseId && e.GrantsAccess());

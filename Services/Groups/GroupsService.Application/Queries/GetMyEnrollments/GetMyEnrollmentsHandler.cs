@@ -23,7 +23,7 @@ public class GetMyEnrollmentsHandler
         var result = new List<MyEnrollmentDto>(enrollments.Count);
         foreach (var enrollment in enrollments.OrderByDescending(e => e.CreatedAt))
         {
-            var courseName = await _courseDirectory.GetCourseNameAsync(enrollment.CourseId) ?? "kurs";
+            var courseName = await _courseDirectory.GetCourseNameAsync(enrollment.CourseId);
 
             result.Add(new MyEnrollmentDto(
                 Id: enrollment.Id,
@@ -35,12 +35,7 @@ public class GetMyEnrollmentsHandler
                 CreatedAt: enrollment.CreatedAt,
                 ActivatedAt: enrollment.ActivatedAt,
                 CancelledAt: enrollment.CancelledAt,
-                CompletedAt: enrollment.CompletedAt,
-                CompletedLessons: enrollment.CompletedLessonCount,
-                CompletedLessonIds: enrollment.CompletedLessons
-                    .OrderBy(l => l.CompletedAt)
-                    .Select(l => l.LessonId)
-                    .ToList()));
+                CompletedAt: enrollment.CompletedAt));
         }
 
         return result;

@@ -24,7 +24,7 @@ public class DeclineInvitationHandler
     public async Task Handle(DeclineInvitationCommand command)
     {
         var invitation = await _invitationRepository.GetByTokenAsync(command.Token)
-            ?? throw new GroupsDomainException("Invitation not found.");
+            ?? throw EntityNotFoundException.Invitation();
 
         invitation.Decline();
         await _invitationRepository.SaveChangesAsync();

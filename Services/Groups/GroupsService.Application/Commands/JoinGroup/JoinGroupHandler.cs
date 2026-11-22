@@ -27,7 +27,7 @@ public class JoinGroupHandler
     public async Task<JoinGroupResult> Handle(JoinGroupCommand command)
     {
         var group = await _groupRepository.GetByIdAsync(command.GroupId)
-            ?? throw new GroupsDomainException($"Group with id {command.GroupId} does not exist.");
+            ?? throw EntityNotFoundException.Group(command.GroupId);
 
         if (group.Type != GroupType.Group)
             throw new GroupsDomainException("Only open groups can be joined directly.");
@@ -50,14 +50,13 @@ public class JoinGroupHandler
         // Ulazak u grupu koja je vec Ready znaci da je i novi upis Ready. Kad grupa
         // TEK SAD postane Ready, svi ostali clanovi prelaze u Ready zajedno sa njim
         // (novi upis jos nije u bazi pa ga upit ne vraca - zato ga ovde izuzimamo).
-        var becameReadyNow = false;
         if (group.Status == GroupStatus.Ready)
         {
             enrollment.MarkReady();
 
             if (!wasReadyBefore)
             {
-                becameReadyNow = true;
+                // TODO notifikacija: grupa je upravo postala Ready - obavestiti ostale clanove.
                 var others = await _enrollmentRepository.GetByGroupIdAsync(group.Id);
                 foreach (var member in others.Where(m => m.Id != enrollment.Id))
                     member.MarkReady();

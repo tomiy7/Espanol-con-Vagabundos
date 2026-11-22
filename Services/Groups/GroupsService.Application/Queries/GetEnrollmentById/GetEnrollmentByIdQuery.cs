@@ -14,5 +14,4 @@ public record EnrollmentDetailDto(
     Guid? GroupId,
     DateTime CreatedAt,
     DateTime? ActivatedAt,
-    DateTime? CompletedAt,
-    int CompletedLessons);
+    DateTime? CompletedAt);
