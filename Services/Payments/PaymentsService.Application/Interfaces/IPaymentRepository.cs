@@ -1,0 +1,13 @@
+﻿using PaymentsService.Domain.Entities;
+using PaymentsService.Domain.Enums;
+using PaymentsService.Domain.Interfaces;
+
+namespace PaymentsService.Application.Interfaces;
+
+public interface IPaymentRepository : IAsyncRepository<Payment>
+{
+    Task<List<Payment>> GetPendingAsync();
+    Task<List<Payment>> GetByUserIdAsync(Guid userId);
+    Task<List<Payment>> GetByCourseIdAsync(Guid courseId);
+    Task<Payment?> GetActivePendingAsync(Guid userId, Guid? courseId, ProductType productType);
+}

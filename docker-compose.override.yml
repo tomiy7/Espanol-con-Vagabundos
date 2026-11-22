@@ -44,6 +44,19 @@ services:
       - courses_data:/var/lib/postgresql/data
     networks:
       - backend
+        
+  courses.api:
+    container_name: courses.api
+    ports:
+      - "5002:8080"
+    environment:
+      - ConnectionStrings__Default=Host=coursesdb;Port=5432;Database=coursesdb;Username=postgres;Password=${DB_PASSWORD}
+      - Jwt__Secret=${JWT_SECRET}
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - coursesdb
+    networks:
+      - backend
   
   # Directus CMS
   directus:
@@ -65,7 +78,7 @@ services:
     networks:
       - backend
         
-    # DB for groups service
+  # DB for groups service
   groupsdb:
     container_name: groupsdb
     environment:
@@ -92,7 +105,6 @@ services:
       - ConnectionStrings__Default=Host=groupsdb;Port=5432;Database=groupsdb;Username=postgres;Password=${DB_PASSWORD}
       - Jwt__Secret=${JWT_SECRET}
       - AuthService__BaseUrl=http://auth.api:8080
-      # Courses jos nije u compose-u; dok ga nema, nazivi kurseva su null (bez greske).
       - CoursesService__BaseUrl=http://courses.api:8080
       - Enrollment__PublicBaseUrl=http://localhost:${GROUPS_API_PORT:-5003}
       # Development: API sam primenjuje migracije na startu.
@@ -103,3 +115,17 @@ services:
     networks:
       - backend
         
+  # DB for payments service
+  paymentsdb:
+    container_name: paymentsdb
+    environment:
+      POSTGRES_DB: paymentsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5436:5432"
+    restart: always
+    volumes:
+      - payments_data:/var/lib/postgresql/data
+    networks:
+      - backend

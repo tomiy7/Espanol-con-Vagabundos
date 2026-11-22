@@ -12,6 +12,15 @@ services:
   coursesdb:
     image: postgres:16
     
+  courses.api:
+    image: courses.api
+    build: 
+      context: .
+      dockerfile: Services/Courses/CoursesService.API/Dockerfile
+      
+  paymentsdb:
+    image: postgres:16
+    
   directus:
     image: directus/directus:latest
     
@@ -28,6 +37,7 @@ volumes:
   auth_data:
   courses_data:
   groups_data:
+  payments_data:
     
 networks:
   backend:
