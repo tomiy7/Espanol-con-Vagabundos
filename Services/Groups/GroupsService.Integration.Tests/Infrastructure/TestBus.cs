@@ -33,6 +33,8 @@ public sealed class TestBus : IAsyncDisposable
 
     public Task<uint> MessageCountAsync(string queue) => _channel.MessageCountAsync(queue);
 
+    public Task<uint> ConsumerCountAsync(string queue) => _channel.ConsumerCountAsync(queue);
+
     public Task PublishAsync(IntegrationEvent integrationEvent) =>
         PublishRawAsync(EventEnvelope.TypeOf(integrationEvent.GetType()),
             JsonSerializer.SerializeToUtf8Bytes(EventEnvelope.From(integrationEvent), EventEnvelope.JsonOptions));
