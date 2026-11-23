@@ -26,7 +26,11 @@ using GroupsService.Application.Queries.GetInvitationByToken;
 using GroupsService.Application.Queries.GetMyEnrollments;
 using GroupsService.Infrastructure.Clients;
 using GroupsService.Infrastructure.Data;
+using GroupsService.Infrastructure.Messaging;
+using GroupsService.Infrastructure.Outbox;
 using GroupsService.Infrastructure.Repository;
+using Messaging.RabbitMq;
+using CourseCompletedEvent = Messaging.Contracts.CourseCompleted;
 using GroupsService.API.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -109,8 +113,18 @@ builder.Services.AddScoped<GetMyEnrollmentsHandler>();
 builder.Services.AddScoped<CheckAccessHandler>();
 builder.Services.AddScoped<GetInvitationByTokenHandler>();
 
-// TODO: CourseCompletedHandler se poziva tek kad Messaging (CourseCompleted iz
-// Courses) bude u repou; do tada nema nicega sto ga pokrece.
+// Poruke (RabbitMQ): odlazni dogadjaji idu kroz outbox (GroupDbContext ih upisuje u istoj
+// transakciji, OutboxDispatcher ih salje), a dolazni CourseCompleted obradjuje
+// CourseCompletedEventHandler. RabbitMq:Enabled=false iskljucuje slanje i slusanje
+// (outbox i dalje upisuje, pa se nista ne gubi).
+var rabbitMq = builder.Configuration.GetSection(RabbitMqOptions.SectionName);
+if (rabbitMq.GetValue(nameof(RabbitMqOptions.Enabled), true))
+{
+    builder.Services.AddRabbitMqMessaging(rabbitMq)
+        .AddHandler<CourseCompletedEvent, CourseCompletedEventHandler>();
+    builder.Services.AddHostedService<OutboxDispatcher>();
+}
+
 // TODO: INotificationService / mejlovi (vidi TODO notifikacija u handlerima).
 
 // Greske: sve odbijene operacije i neocekivani izuzeci postaju ProblemDetails sa stabilnim

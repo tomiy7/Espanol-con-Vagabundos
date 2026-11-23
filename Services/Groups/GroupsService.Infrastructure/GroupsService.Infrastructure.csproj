@@ -18,6 +18,7 @@
     <ItemGroup>
       <ProjectReference Include="..\GroupsService.Application\GroupsService.Application.csproj" />
       <ProjectReference Include="..\GroupsService.Domain\GroupsService.Domain.csproj" />
+      <ProjectReference Include="..\..\..\BuildingBlocks\Messaging\Messaging.csproj" />
     </ItemGroup>
 
 </Project>

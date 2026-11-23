@@ -1,11 +1,9 @@
 ﻿namespace GroupsService.Domain.Events;
 
-// Akumuliraju se u aggregate.DomainEvents ali se NIGDE automatski ne publish-uju.
-// Mejlovi se salju eksplicitno iz Application handlera (INotificationService ->
-// IEmailSender -> RabbitMQ -> NotificationsService), ne preko ovih event-a.
-// Messaging projekat i RabbitMQ vec postoje, pa je sledeci korak dispatcher koji
-// posle SaveChanges objavljuje ove event-e preko IEventPublisher-a (uz outbox),
-// umesto direktnih poziva iz handlera.
+// Akumuliraju se u aggregate.DomainEvents. Pri snimanju GroupDbContext deo njih prevodi
+// u javne (integracione) dogadjaje i upisuje u outbox u istoj transakciji (vidi
+// Infrastructure/Outbox/IntegrationEventMapper), a OutboxDispatcher ih salje na RabbitMQ.
+// Ostali su interni i ne izlaze iz servisa.
 
 public record EnrollmentCreated(Guid EnrollmentId, Guid UserId, Guid CourseId, string Type);
 
