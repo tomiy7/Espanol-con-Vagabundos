@@ -1,6 +1,7 @@
 
 import Link from "next/link";
 import CourseLessonsList from "./CourseLessonsList";
+import BuyCourseButton from "../../../src/components/BuyCourseButton";
 import { notFound } from "next/navigation";
 
 type ListItem = {
@@ -228,12 +229,10 @@ export default async function CoursePage({
                             {parseFloat(course.price).toLocaleString("sr-RS")} €
                         </p>
 
-                        <button
-                            type="button"
-                            className="w-full rounded-full bg-[#d8c6ff] px-6 py-3.5 font-semibold text-zinc-900 transition hover:bg-[#c9b0ff] hover:shadow-md"
-                        >
-                            Kupi kurs
-                        </button>
+                        <BuyCourseButton
+                            courseId={course.id}
+                            price={course.price}
+                        />
 
                         <p className="mt-3 text-center text-xs text-zinc-500">
                             Tvoj sledeći korak ka učenju španskog.

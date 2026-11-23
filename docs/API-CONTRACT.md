@@ -63,6 +63,8 @@ Odgovor `201` (kao sada):
 ```
 Greške: `400` `INVALID_PAYMENT` · `404` `COURSE_NOT_FOUND` · `409` `ALREADY_ENROLLED` (već ima kurs, ne treba ponovo da plaća).
 
+**Uplatnica na čekanju:** sada, ako korisnik već ima `Pending` uplatu za isti kurs, vraća se `400` sa porukom na engleskom ("Active payment already in pending..."). Frontend to za sada prepoznaje po tekstu poruke. Bolje: **vratiti postojeću uplatu** (isti odgovor kao gore, sa QR kodom i PDF-om), da korisnik može ponovo da preuzme uplatnicu. Ako to nije moguće, vratiti `409` sa `"error": "PAYMENT_PENDING"` i porukom na srpskom.
+
 > **Za dogovor:** valuta. Sajt prikazuje cene u **€**, uplatnica je u **RSD**. Odlučite jedno, frontend prikazuje ono što server vrati u `GET /payments/my`.
 
 ### ✅ `GET /payments/my` [Authorize]
