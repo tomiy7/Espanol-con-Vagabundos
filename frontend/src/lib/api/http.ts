@@ -33,16 +33,21 @@ const NETWORK_ERROR_MESSAGE = "Greška pri povezivanju sa serverom. Pokušaj pon
 const DEFAULT_ERROR_MESSAGE = "Došlo je do greške. Pokušaj ponovo.";
 const NOT_LOGGED_IN_MESSAGE = "Potrebno je da se prijaviš.";
 
-// Backend vraca { error, message }, a ASP.NET validacija { title, errors }.
+// Auth/Payments vracaju { error, message }, Groups ProblemDetails { detail, code },
+// a ASP.NET validacija { title, errors }.
 function getErrorMessage(data: unknown): string | undefined {
     if (!data || typeof data !== "object") {
         return undefined;
     }
 
-    const body = data as { message?: unknown; errors?: unknown; title?: unknown };
+    const body = data as { message?: unknown; detail?: unknown; errors?: unknown; title?: unknown };
 
     if (typeof body.message === "string" && body.message) {
         return body.message;
+    }
+
+    if (typeof body.detail === "string" && body.detail) {
+        return body.detail;
     }
 
     if (body.errors && typeof body.errors === "object") {
@@ -64,10 +69,14 @@ function getErrorMessage(data: unknown): string | undefined {
 
 function getErrorCode(data: unknown): string | undefined {
     if (data && typeof data === "object") {
-        const error = (data as { error?: unknown }).error;
+        const { error, code } = data as { error?: unknown; code?: unknown };
 
         if (typeof error === "string") {
             return error;
+        }
+
+        if (typeof code === "string") {
+            return code;
         }
     }
 

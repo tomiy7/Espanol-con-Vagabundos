@@ -125,6 +125,16 @@ export default function Header() {
                                         Moj nalog
                                     </Link>
 
+                                    {user?.role === "admin" && (
+                                        <Link
+                                            href="/admin"
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className="block px-4 py-3 text-sm text-zinc-700 transition hover:bg-[#fff3c2]"
+                                        >
+                                            Admin panel
+                                        </Link>
+                                    )}
+
                                     <div className="border-t border-zinc-100" />
 
                                     <button

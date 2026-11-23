@@ -343,6 +343,97 @@ public class AuthController : ControllerBase
         });
     }
 
+    // Admin menja ulogu korisniku. Nova uloga ulazi u token pri sledecoj prijavi ili
+    // osvezavanju tokena. Admin ne moze sebi da promeni ulogu (da ne ostane bez admina).
+    [HttpPatch("admin/users/{userId}/role")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(
+        typeof(UserDetailResponseDto),
+        StatusCodes.Status200OK
+    )]
+    [ProducesResponseType(
+        typeof(ErrorResponseDto),
+        StatusCodes.Status400BadRequest
+    )]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+        typeof(ErrorResponseDto),
+        StatusCodes.Status404NotFound
+    )]
+    public async Task<IActionResult> ChangeUserRole(
+        Guid userId,
+        ChangeRoleRequestDto request)
+    {
+        var role = request.Role.Trim().ToLowerInvariant();
+
+        if (role is not (Roles.Student or Roles.Professor or Roles.Admin))
+        {
+            return BadRequest(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.InvalidRole,
+                Message = "Role must be student, professor or admin"
+            });
+        }
+
+        var currentUserId =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (Guid.TryParse(currentUserId, out var adminId)
+            && adminId == userId)
+        {
+            return BadRequest(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.CannotChangeOwnRole,
+                Message = "You cannot change your own role"
+            });
+        }
+
+        var user =
+            await _userRepository.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound(new ErrorResponseDto
+            {
+                Error = AuthErrorCodes.UserNotFound,
+                Message = "User not found"
+            });
+        }
+
+        if (user.Role != role)
+        {
+            var previousRole = user.Role;
+
+            user.Role = role;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _userRepository.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Admin {AdminId} changed role of user {UserId} from {OldRole} to {NewRole}",
+                currentUserId,
+                user.Id,
+                previousRole,
+                role
+            );
+        }
+
+        return Ok(new UserDetailResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Phone = user.Phone,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt
+        });
+    }
+
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(

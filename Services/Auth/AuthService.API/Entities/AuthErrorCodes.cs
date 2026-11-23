@@ -7,4 +7,6 @@ public class AuthErrorCodes
     public const string InvalidCredentials = "INVALID_CREDENTIALS";
     public const string InvalidRefreshToken = "INVALID_REFRESH_TOKEN";
     public const string UserNotFound = "USER_NOT_FOUND";
+    public const string InvalidRole = "INVALID_ROLE";
+    public const string CannotChangeOwnRole = "CANNOT_CHANGE_OWN_ROLE";
 }

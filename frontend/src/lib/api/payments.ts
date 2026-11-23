@@ -19,6 +19,37 @@ export type CreatePaymentResponse = {
     uplatnicaPdfBase64: string;
 };
 
+export type PendingPayment = {
+    id: string;
+    userId: string;
+    courseId: string | null;
+    productType: ProductType;
+    amount: number;
+    currency: string;
+    referenceNumber: string;
+    createdAt: string;
+};
+
+/** Admin i profesor. */
+export function getPendingPayments() {
+    return apiRequest<PendingPayment[]>("payments", "/payments/pending", { auth: true });
+}
+
+/** Samo admin. */
+export function confirmPayment(paymentId: string) {
+    return apiRequest<{ message: string }>("payments", `/payments/${paymentId}/confirm`, {
+        method: "POST",
+        auth: true,
+    });
+}
+
+export function cancelPayment(paymentId: string) {
+    return apiRequest<{ message: string }>("payments", `/payments/${paymentId}/cancel`, {
+        method: "POST",
+        auth: true,
+    });
+}
+
 export function createPayment(request: CreatePaymentRequest) {
     return apiRequest<CreatePaymentResponse>("payments", "/payments", {
         method: "POST",

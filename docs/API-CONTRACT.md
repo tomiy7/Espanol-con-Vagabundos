@@ -53,6 +53,11 @@ Ostaju kako jesu.
 ### 🔧 `GET /auth/me` [Authorize]
 Radi, ali **ne vraća `gender`** (polje postoji u DTO-u, samo se ne popunjava u `Me()`). Dodati `Gender = user.Gender`.
 
+### ✅ `PATCH /auth/admin/users/{userId}/role` [Admin] (dodato sa frontend strane, molim pregled)
+Telo `{ "role": "student" | "professor" | "admin" }`, vraća `UserDetailResponseDto`.
+Greške: `400 INVALID_ROLE`, `400 CANNOT_CHANGE_OWN_ROLE` (admin ne menja sebi ulogu), `404 USER_NOT_FOUND`.
+Nova uloga ulazi u token pri sledećoj prijavi ili `POST /auth/refresh` (refresh čita ulogu iz baze). Koristi ga stranica `/admin/users`.
+
 ---
 
 ## Kupovina: PaymentsService
