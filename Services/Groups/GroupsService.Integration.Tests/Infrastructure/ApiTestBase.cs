@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GroupsService.Integration.Tests.Infrastructure;
@@ -46,9 +47,12 @@ public abstract class ApiTestBase : IAsyncLifetime
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    protected HttpClient ClientFor(TestUser? user)
+    protected HttpClient ClientFor(TestUser? user) => ClientFor(Factory, user);
+
+    // Klijent za varijantu API-ja (vidi ApiFactory.Variant).
+    protected static HttpClient ClientFor(WebApplicationFactory<Program> factory, TestUser? user)
     {
-        var client = Factory.CreateClient();
+        var client = factory.CreateClient();
         if (user is not null)
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token(user));
         return client;
@@ -87,6 +91,18 @@ public abstract class ApiTestBase : IAsyncLifetime
         await AssertStatus(expected, response);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal(code, await ErrorCode(response));
+    }
+
+    // Za asinhrone posledice (poruke, pozadinski servisi): ceka dok uslov ne postane tacan.
+    protected static async Task Eventually(Func<bool> condition, string because, int seconds = 15)
+    {
+        var until = DateTime.UtcNow.AddSeconds(seconds);
+        while (DateTime.UtcNow < until)
+        {
+            if (condition()) return;
+            await Task.Delay(100);
+        }
+        Assert.Fail($"Timed out waiting until {because}.");
     }
 
     // ---------- scenario pomocne ----------
