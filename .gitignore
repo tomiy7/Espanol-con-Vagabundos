@@ -37,3 +37,6 @@ logs/
 *.rsuser
 *.userosscache
 *.sln.docstates
+
+# Lokalna docker podesavanja (razlikuju se po racunaru)
+docker-compose.local.yml

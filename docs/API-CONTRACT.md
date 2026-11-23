@@ -23,7 +23,25 @@ Adrese u frontendu (`frontend/.env.local`):
 |---|---|---|
 | Auth | `NEXT_PUBLIC_AUTH_URL` | `http://localhost:5001` |
 | Courses | `NEXT_PUBLIC_COURSES_URL` | `http://localhost:5002` |
-| Payments | `NEXT_PUBLIC_PAYMENTS_URL` | (port PaymentsService-a) |
+| Groups | `NEXT_PUBLIC_GROUPS_URL` | `http://localhost:5003` |
+| Payments | `NEXT_PUBLIC_PAYMENTS_URL` | `http://localhost:5004` |
+
+**PaymentsService još nije u `docker-compose.override.yml`** (nema port, bazu ni JWT), pa ne radi. Dodati po uzoru na `courses.api`, na portu **5004** (5003 je zauzeo Groups):
+```yaml
+  payments.api:
+    container_name: payments.api
+    ports:
+      - "5004:8080"
+    environment:
+      - ConnectionStrings__Default=Host=paymentsdb;Port=5432;Database=paymentsdb;Username=postgres;Password=${DB_PASSWORD}
+      - Jwt__Secret=${JWT_SECRET}
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - paymentsdb
+    networks:
+      - backend
+```
+Napomena: u `appsettings.Development.json` PaymentsService-a JWT ključ je drugačiji od onog u Auth-u, a baza je na 5437 umesto 5436. Preko compose-a se koristi isti `JWT_SECRET` kao Auth. Migracije se ne pokreću same, treba ih primeniti na `paymentsdb`.
 
 ---
 

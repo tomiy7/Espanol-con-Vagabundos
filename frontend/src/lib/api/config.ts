@@ -4,6 +4,7 @@ export const API_URLS = {
     auth: process.env.NEXT_PUBLIC_AUTH_URL ?? "",
     courses: process.env.NEXT_PUBLIC_COURSES_URL ?? "",
     payments: process.env.NEXT_PUBLIC_PAYMENTS_URL ?? "",
+    groups: process.env.NEXT_PUBLIC_GROUPS_URL ?? "",
     directus: process.env.NEXT_PUBLIC_DIRECTUS_URL ?? "",
 } as const;
 
