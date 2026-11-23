@@ -1,159 +1,142 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Prijavljeni korisnik za ceo sajt. Token se cita iz jednog zajednickog izvora
+// (localStorage), pa Header, progres i stranice uvek vide isto stanje.
+// Istekao token se tretira kao odjava.
 
-type User = {
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
+import {
+    ACCESS_TOKEN_KEY,
+    AUTH_CHANGE_EVENT,
+    clearTokens,
+    decodeJwtPayload,
+    getAccessToken,
+    getTokenExpiresAt,
+    readStoredAccessToken,
+    type JwtPayload,
+} from "../lib/auth/tokens";
+
+export type AuthUser = {
     id?: string;
     username?: string;
     firstName?: string;
     lastName?: string;
     gender?: string;
+    email?: string;
+    role?: string;
 };
 
-function decodeToken(token: string): User | null {
-    try {
-        const base64Url = token.split(".")[1];
+const CLAIM = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/";
+const ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
-        const base64 = base64Url
-            .replace(/-/g, "+")
-            .replace(/_/g, "/");
+// setTimeout ne prihvata vise od ~24 dana.
+const MAX_TIMEOUT_MS = 2_147_483_647;
 
-        const payload = JSON.parse(
-            decodeURIComponent(
-                window
-                    .atob(base64)
-                    .split("")
-                    .map(
-                        (c) =>
-                            "%" +
-                            (
-                                "00" +
-                                c.charCodeAt(0).toString(16)
-                            ).slice(-2)
-                    )
-                    .join("")
-            )
-        );
+function pick(payload: JwtPayload, ...keys: string[]): string | undefined {
+    for (const key of keys) {
+        const value = payload[key];
 
-        console.log("JWT PAYLOAD:", payload);
-
-        return {
-            id:
-                payload.sub ||
-                payload.userId ||
-                payload.user_id ||
-                payload.id ||
-                payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
-
-            username:
-                payload.username ||
-                payload.unique_name ||
-                payload.preferred_username ||
-                payload.email ||
-                payload[
-                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
-                    ],
-
-            firstName:
-                payload.firstName ||
-                payload.firstname ||
-                payload.given_name ||
-                payload[
-                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
-                    ],
-
-            lastName:
-                payload.lastName ||
-                payload.lastname ||
-                payload.family_name ||
-                payload[
-                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
-                    ],
-
-            gender:
-                payload.gender ||
-                payload.Gender ||
-                payload[
-                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/gender"
-                    ]
-        };
-    } catch (error) {
-        console.error("Error decoding token:", error);
-
-        return null;
+        if (typeof value === "string" && value) {
+            return value;
+        }
     }
+
+    return undefined;
+}
+
+// Ista polja kao i ranije: id mora ostati isti jer se po njemu cuva progres.
+function toUser(payload: JwtPayload): AuthUser {
+    return {
+        id: pick(payload, "sub", "userId", "user_id", "id", `${CLAIM}nameidentifier`),
+        username: pick(payload, "username", "unique_name", "preferred_username", "email", `${CLAIM}name`),
+        firstName: pick(payload, "firstName", "firstname", "given_name", `${CLAIM}givenname`),
+        lastName: pick(payload, "lastName", "lastname", "family_name", `${CLAIM}surname`),
+        gender: pick(payload, "gender", "Gender", `${CLAIM}gender`),
+        email: pick(payload, "email", `${CLAIM}emailaddress`),
+        role: pick(payload, "role", ROLE_CLAIM),
+    };
+}
+
+function subscribe(onChange: () => void) {
+    function handleStorage(event: StorageEvent) {
+        // Prijava/odjava u drugom tabu
+        if (event.key === null || event.key === ACCESS_TOKEN_KEY) {
+            onChange();
+        }
+    }
+
+    window.addEventListener(AUTH_CHANGE_EVENT, onChange);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+        window.removeEventListener(AUTH_CHANGE_EVENT, onChange);
+        window.removeEventListener("storage", handleStorage);
+    };
+}
+
+function getServerToken() {
+    return null;
+}
+
+function subscribeNoop() {
+    return () => {};
 }
 
 export function useAuth() {
-    const [user, setUser] =
-        useState<User | null>(null);
+    const token = useSyncExternalStore(subscribe, getAccessToken, getServerToken);
 
-    const [loading, setLoading] =
-        useState(true);
+    // Na serveru i pri prvom renderu ne znamo da li je korisnik prijavljen.
+    const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
-    function checkAuth() {
-        const token =
-            localStorage.getItem("accessToken");
-
+    const user = useMemo(() => {
         if (!token) {
-            setUser(null);
-            setLoading(false);
+            return null;
+        }
 
+        const payload = decodeJwtPayload(token);
+
+        return payload ? toUser(payload) : null;
+    }, [token]);
+
+    // Kad token istekne, obrisi ga (i odjavi korisnika na celom sajtu).
+    useEffect(() => {
+        const stored = readStoredAccessToken();
+
+        if (!stored) {
             return;
         }
 
-        const decodedUser =
-            decodeToken(token);
+        const payload = decodeJwtPayload(stored);
+        const expiresAt = payload ? getTokenExpiresAt(payload) : null;
 
-        console.log(
-            "DECODED USER:",
-            decodedUser
-        );
-
-        setUser(decodedUser);
-        setLoading(false);
-    }
-
-    useEffect(() => {
-        checkAuth();
-
-        function handleAuthChange() {
-            checkAuth();
+        if (expiresAt === null) {
+            return;
         }
 
-        window.addEventListener(
-            "auth-change",
-            handleAuthChange
-        );
+        const msLeft = expiresAt - Date.now();
 
-        return () => {
-            window.removeEventListener(
-                "auth-change",
-                handleAuthChange
-            );
-        };
+        if (msLeft <= 0) {
+            clearTokens();
+            return;
+        }
+
+        if (msLeft > MAX_TIMEOUT_MS) {
+            return;
+        }
+
+        const timer = window.setTimeout(clearTokens, msLeft);
+
+        return () => window.clearTimeout(timer);
+    }, [token]);
+
+    const logout = useCallback(() => {
+        clearTokens();
     }, []);
-
-    function logout() {
-        localStorage.removeItem(
-            "accessToken"
-        );
-
-        localStorage.removeItem(
-            "refreshToken"
-        );
-
-        setUser(null);
-
-        window.dispatchEvent(
-            new Event("auth-change")
-        );
-    }
 
     return {
         user,
         isAuthenticated: !!user,
-        loading,
-        logout
+        loading: !hydrated,
+        logout,
     };
 }

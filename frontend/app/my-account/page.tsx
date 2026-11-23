@@ -1,60 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-type User = {
-    id: string;
-    username: string;
-    email: string;
-    phone?: string;
-    role: string;
-    firstName?: string;
-    lastName?: string;
-    gender?: string;
-    createdAt: string;
-};
+import { useAuth } from "../../src/hooks/useAuth";
+import { getMe, type MeResponse } from "../../src/lib/api/auth";
+import { ApiError } from "../../src/lib/api/http";
 
 export default function MyAccountPage() {
     const router = useRouter();
-    const [user, setUser] = useState<User | null>(null);
+    const { isAuthenticated, loading: authLoading, logout } = useAuth();
+    const [user, setUser] = useState<MeResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const hadUser = useRef(false);
 
     useEffect(() => {
+        if (authLoading) return;
+
+        if (!isAuthenticated) {
+            // Odjava (ovde ili iz menija u header-u) vodi na pocetnu, kao i ranije.
+            // Ako korisnik nije bio prijavljen ili mu je token istekao - na prijavu.
+            router.push(hadUser.current ? "/" : "/login");
+            return;
+        }
+
         let isMounted = true;
 
         async function getUser() {
-            const token = localStorage.getItem("accessToken");
-
-            if (!token) {
-                router.push("/login");
-                return;
-            }
-
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/auth/me`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-
-                if (!res.ok) {
-                    if (isMounted) setError("Nije moguće učitati podatke o korisniku.");
-                    return;
+                const data = await getMe();
+                if (isMounted) {
+                    hadUser.current = true;
+                    setUser(data);
+                    setLoading(false);
                 }
+            } catch (err) {
+                // 401: token je vec obrisan, efekat iznad preusmerava na /login
+                if (!isMounted || (err instanceof ApiError && err.status === 401)) return;
 
-                const data = await res.json();
-                if (isMounted) setUser(data);
-            } catch {
-                if (isMounted) setError("Greška pri povezivanju sa serverom.");
-            } finally {
-                if (isMounted) setLoading(false);
+                setError(
+                    err instanceof ApiError && err.status === 0
+                        ? "Greška pri povezivanju sa serverom."
+                        : "Nije moguće učitati podatke o korisniku."
+                );
+                setLoading(false);
             }
         }
 
         getUser();
         return () => { isMounted = false; };
-    }, [router]);
+    }, [authLoading, isAuthenticated, router]);
 
     function getVagabundoName() {
         const name = user?.firstName || user?.username || "";
@@ -65,9 +61,7 @@ export default function MyAccountPage() {
     }
 
     function handleLogout() {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        window.dispatchEvent(new Event("auth-change"));
+        logout();
         router.push("/");
     }
 
