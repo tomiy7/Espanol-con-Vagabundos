@@ -1,23 +1,23 @@
 services:
-
+  
   authdb:
     image: postgres:16
-
+    
   auth.api:
     image: auth.api
     build:
       context: .
       dockerfile: Services/Auth/AuthService.API/Dockerfile
-
+    
   coursesdb:
     image: postgres:16
-
+    
   courses.api:
     image: courses.api
-    build:
+    build: 
       context: .
       dockerfile: Services/Courses/CoursesService.API/Dockerfile
-
+      
   paymentsdb:
     image: postgres:16
 
@@ -34,10 +34,19 @@ services:
       CORS_ORIGIN: "http://localhost:3000"
     volumes:
       - directus_uploads:/directus/uploads
+  groupsdb:
+    image: postgres:16
+    
+  groups.api:
+    image: groups.api
+    build:
+      context: .
+      dockerfile: Services/Groups/GroupsService.API/Dockerfile
 
 volumes:
   auth_data:
   courses_data:
+  groups_data:
   payments_data:
   directus_uploads:
 
