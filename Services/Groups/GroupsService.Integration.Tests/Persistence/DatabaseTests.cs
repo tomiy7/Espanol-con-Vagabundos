@@ -27,7 +27,7 @@ public class DatabaseTests : ApiTestBase
             db.Database.SqlQueryRaw<string>(
                 "SELECT table_name AS \"Value\" FROM information_schema.tables WHERE table_schema = 'public'").ToList());
 
-        foreach (var expected in new[] { "enrollments", "groups", "group_members", "group_slots", "partner_invitations", "audit_entries" })
+        foreach (var expected in new[] { "enrollments", "groups", "group_members", "group_slots", "partner_invitations", "audit_entries", "outbox_messages" })
             Assert.Contains(expected, tables);
 
         Assert.DoesNotContain("enrollment_completed_lessons", tables);

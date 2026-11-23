@@ -18,3 +18,13 @@ public sealed class IntegrationTheoryAttribute : TheoryAttribute
         if (!ApiFactory.IsConfigured) Skip = ApiFactory.NotConfiguredMessage;
     }
 }
+
+// Testovi poruka traze i bazu i RabbitMQ (env GROUPS_TEST_RABBITMQ).
+public sealed class MessagingFactAttribute : FactAttribute
+{
+    public MessagingFactAttribute()
+    {
+        if (!ApiFactory.IsConfigured) Skip = ApiFactory.NotConfiguredMessage;
+        else if (ApiFactory.RabbitMqUri is null) Skip = ApiFactory.RabbitMqNotConfiguredMessage;
+    }
+}

@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - "Services/Groups/**"
+      - "BuildingBlocks/**"
       - "docker-compose*.yml"
       - ".github/workflows/groups.yml"
   pull_request:
     paths:
       - "Services/Groups/**"
+      - "BuildingBlocks/**"
       - "docker-compose*.yml"
       - ".github/workflows/groups.yml"
 
@@ -32,8 +34,21 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      rabbitmq:
+        image: rabbitmq:4-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: ci
+          RABBITMQ_DEFAULT_PASS: ci-only-password
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 10
     env:
       GROUPS_TEST_CONNECTION: Host=localhost;Port=5432;Username=postgres;Password=ci-only-password
+      GROUPS_TEST_RABBITMQ: amqp://ci:ci-only-password@localhost:5672
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -59,6 +74,7 @@ jobs:
     env:
       DB_PASSWORD: ci-only-password
       JWT_SECRET: ci-only-jwt-secret-ci-only-jwt-secret-1234
+      RABBITMQ_PASSWORD: ci-only-password
       GROUPS_API_PORT: "5003"
       GROUPS_SMOKE_BASE_URL: http://localhost:5003
       GROUPS_SMOKE_JWT_SECRET: ci-only-jwt-secret-ci-only-jwt-secret-1234
@@ -67,8 +83,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - name: Start groupsdb and groups.api
-        run: docker compose up -d --build groupsdb groups.api
+      - name: Start groups.api (with groupsdb and rabbitmq)
+        run: docker compose up -d --build groups.api
       - name: Wait for health
         run: |
           for _ in $(seq 1 60); do
@@ -80,7 +96,7 @@ jobs:
         run: dotnet test Services/Groups/GroupsService.Smoke.Tests -c Release
       - name: Logs on failure
         if: failure()
-        run: docker compose logs groupsdb groups.api
+        run: docker compose logs groupsdb rabbitmq groups.api
       - name: Tear down
         if: always()
         run: docker compose down -v

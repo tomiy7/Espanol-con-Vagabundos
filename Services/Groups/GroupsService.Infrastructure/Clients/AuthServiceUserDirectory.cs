@@ -52,7 +52,13 @@ public class AuthServiceUserDirectory : IUserDirectory
             }
 
             var dto = await response.Content.ReadFromJsonAsync<AuthUserDetailDto>(cancellationToken: ct);
-            if (dto is null) return null;
+            // Odgovor koji nije ocekivanog oblika (nema id-ja ili mejla) = nema podataka,
+            // umesto praznog kontakta na koji bi se kasnije slao mejl.
+            if (dto is null || dto.Id == Guid.Empty || string.IsNullOrWhiteSpace(dto.Email))
+            {
+                _logger.LogWarning("Auth service returned an unexpected user payload for {UserId}.", userId);
+                return null;
+            }
 
             return new UserContact(dto.Id, dto.Email, $"{dto.FirstName} {dto.LastName}".Trim());
         }

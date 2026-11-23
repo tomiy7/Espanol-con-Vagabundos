@@ -24,6 +24,9 @@ services:
   directus:
     image: directus/directus:latest
     
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+
   groupsdb:
     image: postgres:16
 
@@ -38,6 +41,7 @@ volumes:
   courses_data:
   groups_data:
   payments_data:
+  rabbitmq_data:
     
 networks:
   backend:

@@ -11,11 +11,13 @@ COPY ["Services/Groups/GroupsService.API/GroupsService.API.csproj", "Services/Gr
 COPY ["Services/Groups/GroupsService.Application/GroupsService.Application.csproj", "Services/Groups/GroupsService.Application/"]
 COPY ["Services/Groups/GroupsService.Domain/GroupsService.Domain.csproj", "Services/Groups/GroupsService.Domain/"]
 COPY ["Services/Groups/GroupsService.Infrastructure/GroupsService.Infrastructure.csproj", "Services/Groups/GroupsService.Infrastructure/"]
+COPY ["BuildingBlocks/Messaging/Messaging.csproj", "BuildingBlocks/Messaging/"]
 RUN dotnet restore "Services/Groups/GroupsService.API/GroupsService.API.csproj"
 COPY ["Services/Groups/GroupsService.API/", "Services/Groups/GroupsService.API/"]
 COPY ["Services/Groups/GroupsService.Application/", "Services/Groups/GroupsService.Application/"]
 COPY ["Services/Groups/GroupsService.Domain/", "Services/Groups/GroupsService.Domain/"]
 COPY ["Services/Groups/GroupsService.Infrastructure/", "Services/Groups/GroupsService.Infrastructure/"]
+COPY ["BuildingBlocks/Messaging/", "BuildingBlocks/Messaging/"]
 WORKDIR "/src/Services/Groups/GroupsService.API"
 RUN dotnet build "./GroupsService.API.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
