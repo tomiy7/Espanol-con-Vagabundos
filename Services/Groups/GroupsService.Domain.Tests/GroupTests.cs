@@ -128,4 +128,40 @@ public class GroupTests
         g.AssignProfessorToSlot(0, DayOfWeek.Monday, new TimeOnly(18, 0), prof);
         g.AssignProfessorToSlot(0, DayOfWeek.Monday, new TimeOnly(18, 0), prof);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(Group.MaxFormationWindowDays + 1)]
+    [InlineData(int.MaxValue)]
+    public void Formation_window_must_be_reasonable(int days)
+    {
+        Assert.Throws<GroupsDomainException>(() => Group.CreateGroup(Guid.NewGuid(), days));
+    }
+
+    [Fact]
+    public void A_day_of_week_that_does_not_exist_is_rejected()
+    {
+        var g = Group.CreateGroup(Guid.NewGuid(), 7);
+        Assert.Throws<GroupsDomainException>(() =>
+            g.AssignProfessorToSlot(0, (DayOfWeek)9, new TimeOnly(18, 0), Guid.NewGuid()));
+    }
+
+    [Theory]
+    [InlineData(-366)]
+    [InlineData(366)]
+    public void Unlock_date_far_from_the_start_is_rejected(int days)
+    {
+        var g = GroupWithSlots(3);
+        Assert.Throws<GroupsDomainException>(() => g.Start(unlockStartsAt: Now.AddDays(days), now: Now));
+        Assert.Equal(GroupStatus.Ready, g.Status);
+    }
+
+    [Fact]
+    public void Unlock_date_within_a_year_is_accepted()
+    {
+        var g = GroupWithSlots(3);
+        g.Start(unlockStartsAt: Now.AddDays(-30), now: Now);
+        Assert.Equal(Now.AddDays(-30), g.UnlockStartsAt);
+    }
 }

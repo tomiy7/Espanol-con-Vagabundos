@@ -15,6 +15,10 @@ public class Group : AggregateRoot
     // Pair i Group tip imaju po 3 nedeljna termina (npr. pon/sre/pet).
     public const int WeeklySlotCount = 3;
 
+    // Granice protiv besmislenih vrednosti (greska u unosu ili namerna zloupotreba).
+    public const int MaxFormationWindowDays = 90;
+    public static readonly TimeSpan MaxUnlockOffset = TimeSpan.FromDays(365);
+
     public Guid CourseId { get; private set; }
     public GroupType Type { get; private set; }
     public GroupStatus Status { get; private set; }
@@ -76,6 +80,9 @@ public class Group : AggregateRoot
     {
         if (formationWindowDays <= 0)
             throw new GroupsDomainException("Formation window must be positive.");
+
+        if (formationWindowDays > MaxFormationWindowDays)
+            throw new GroupsDomainException($"Formation window cannot be longer than {MaxFormationWindowDays} days.");
 
         var group = CreateInternal(courseId, GroupType.Group, slotCount: WeeklySlotCount);
         group.FormationWindowEndsAt = DateTime.UtcNow.AddDays(formationWindowDays);
@@ -200,6 +207,13 @@ public class Group : AggregateRoot
                 $"All {_slots.Count} weekly slot(s) must have a professor assigned before starting.");
 
         var startedAt = now ?? DateTime.UtcNow;
+
+        // Otkljucavanje moze da krene ranije (grupa je vec radila) ili kasnije, ali ne
+        // godinama daleko od starta.
+        if (unlockStartsAt.HasValue
+            && (unlockStartsAt.Value < startedAt - MaxUnlockOffset || unlockStartsAt.Value > startedAt + MaxUnlockOffset))
+            throw new GroupsDomainException("Lesson unlock date must be within a year of the group start.");
+
         Status = GroupStatus.Active;
         StartedAt = startedAt;
         UnlockStartsAt = unlockStartsAt ?? startedAt;

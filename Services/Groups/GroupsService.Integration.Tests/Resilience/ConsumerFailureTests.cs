@@ -44,12 +44,15 @@ public class ConsumerFailureTests : ApiTestBase
         });
         _ = api.Server; // pokrece host, pa i potrosaca
 
-        // Red pravi potrosac na startu; poruka poslata pre toga bi se izgubila.
-        await WaitForQueue();
+        // Red i vezivanja pravi potrosac na startu; poruka poslata pre toga bi se izgubila.
+        await WaitForConsumer();
         return (api, bus, faults);
     }
 
-    private static async Task WaitForQueue()
+    // Ceka da se potrosac zakaci na red. Samo postojanje reda nije dovoljno: vezivanje za
+    // exchange ide posle deklaracije reda, pa bi poruka objavljena izmedju ta dva koraka
+    // otisla nikud.
+    private static async Task WaitForConsumer()
     {
         var until = DateTime.UtcNow.AddSeconds(15);
         while (DateTime.UtcNow < until)
@@ -57,8 +60,9 @@ public class ConsumerFailureTests : ApiTestBase
             var probe = await TestBus.ConnectAsync(Exchange); // pasivna provera zatvara kanal ako reda nema
             try
             {
-                await probe.MessageCountAsync(Queue);
-                return;
+                if (await probe.ConsumerCountAsync(Queue) > 0)
+                    return;
+                await Task.Delay(200);
             }
             catch (Exception)
             {
@@ -69,7 +73,7 @@ public class ConsumerFailureTests : ApiTestBase
                 await probe.DisposeAsync();
             }
         }
-        Assert.Fail("The consumer did not declare its queue.");
+        Assert.Fail("The consumer did not attach to its queue.");
     }
 
     private async Task<(TestUser professor, List<TestUser> students, List<Guid> ids, Guid groupId)> ActiveGroup()
