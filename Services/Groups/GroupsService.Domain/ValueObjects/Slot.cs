@@ -27,6 +27,10 @@ public class Slot : Entity
         if (professorId == Guid.Empty)
             throw new GroupsDomainException("Professor ID cannot be empty.");
 
+        // JSON dozvoljava i broj (npr. 9), pa se proverava da dan zaista postoji.
+        if (!Enum.IsDefined(dayOfWeek))
+            throw new GroupsDomainException("Day of week is not valid.");
+
         DayOfWeek = dayOfWeek;
         Time = time;
         ProfessorId = professorId;

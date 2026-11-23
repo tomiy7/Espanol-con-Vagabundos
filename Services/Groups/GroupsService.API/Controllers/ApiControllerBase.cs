@@ -15,7 +15,7 @@ public abstract class ApiControllerBase : ControllerBase
 {
     // Id korisnika se uvek cita iz validiranog JWT-a, nikad iz tela zahteva.
     protected Guid CurrentUserId =>
-        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) && id != Guid.Empty
             ? id
             : throw new UnauthorizedAccessException("The token does not contain a valid user id.");
 
