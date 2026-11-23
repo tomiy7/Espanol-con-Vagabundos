@@ -78,6 +78,26 @@ services:
     networks:
       - backend
         
+  # Message broker (dogadjaji izmedju servisa); UI na http://localhost:15672
+  rabbitmq:
+    container_name: coursesite.rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-coursesite}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_UI_PORT:-15672}:15672"
+    restart: always
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - backend
+
   # DB for groups service
   groupsdb:
     container_name: groupsdb
@@ -107,10 +127,15 @@ services:
       - AuthService__BaseUrl=http://auth.api:8080
       - CoursesService__BaseUrl=http://courses.api:8080
       - Enrollment__PublicBaseUrl=http://localhost:${GROUPS_API_PORT:-5003}
+      - RabbitMq__HostName=rabbitmq
+      - RabbitMq__UserName=${RABBITMQ_USER:-coursesite}
+      - RabbitMq__Password=${RABBITMQ_PASSWORD}
       # Development: API sam primenjuje migracije na startu.
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       groupsdb:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - backend
