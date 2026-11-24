@@ -125,6 +125,7 @@ services:
       - ConnectionStrings__Default=Host=groupsdb;Port=5432;Database=groupsdb;Username=postgres;Password=${DB_PASSWORD}
       - Jwt__Secret=${JWT_SECRET}
       - AuthService__BaseUrl=http://auth.api:8080
+      - AuthService__ServiceAdminToken=${AUTH_SERVICE_ADMIN_TOKEN:-}
       - CoursesService__BaseUrl=http://courses.api:8080
       - Enrollment__PublicBaseUrl=http://localhost:${GROUPS_API_PORT:-5003}
       - RabbitMq__HostName=rabbitmq
@@ -140,6 +141,66 @@ services:
     networks:
       - backend
         
+  # DB for notifications service (evidencija poslatih mejlova)
+  notificationsdb:
+    container_name: notificationsdb
+    environment:
+      POSTGRES_DB: notificationsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${NOTIFICATIONS_DB_PORT:-5438}:5432"
+    volumes:
+      - notifications_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d notificationsdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - backend
+
+  # Lokalni SMTP koji hvata sve mejlove (nista ne ide napolje); UI na http://localhost:8025
+  mailpit:
+    container_name: coursesite.mailpit
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    networks:
+      - backend
+
+  notifications.api:
+    container_name: notifications.api
+    ports:
+      - "${NOTIFICATIONS_API_PORT:-5004}:8080"
+    environment:
+      - ConnectionStrings__Default=Host=notificationsdb;Port=5432;Database=notificationsdb;Username=postgres;Password=${DB_PASSWORD}
+      - AuthService__BaseUrl=http://auth.api:8080
+      - AuthService__ServiceAdminToken=${AUTH_SERVICE_ADMIN_TOKEN:-}
+      - CoursesService__BaseUrl=http://courses.api:8080
+      - Notifications__FrontendBaseUrl=${FRONTEND_BASE_URL:-http://localhost:3000}
+      - Smtp__Host=${SMTP_HOST:-mailpit}
+      - Smtp__Port=${SMTP_PORT:-1025}
+      - Smtp__UseSsl=${SMTP_USE_SSL:-false}
+      - Smtp__UserName=${SMTP_USER:-}
+      - Smtp__Password=${SMTP_PASSWORD:-}
+      - Smtp__FromAddress=${SMTP_FROM:-no-reply@espanolconvagabundos.local}
+      - Smtp__FromName=${SMTP_FROM_NAME:-Español con Vagabundos}
+      - RabbitMq__HostName=rabbitmq
+      - RabbitMq__UserName=${RABBITMQ_USER:-coursesite}
+      - RabbitMq__Password=${RABBITMQ_PASSWORD}
+      # Development: servis sam primenjuje migracije na startu.
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      notificationsdb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - backend
+
   # DB for payments service
   paymentsdb:
     container_name: paymentsdb

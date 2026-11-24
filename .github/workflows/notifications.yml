@@ -1,0 +1,94 @@
+name: notifications
+
+on:
+  push:
+    paths:
+      - "Services/Notifications/**"
+      - "BuildingBlocks/**"
+      - "docker-compose*.yml"
+      - ".github/workflows/notifications.yml"
+  pull_request:
+    paths:
+      - "Services/Notifications/**"
+      - "BuildingBlocks/**"
+      - "docker-compose*.yml"
+      - ".github/workflows/notifications.yml"
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  # Unit testovi (sabloni) + integracioni: poruka na RabbitMQ -> mejl u Mailpit-u.
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      rabbitmq:
+        image: rabbitmq:4-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: ci
+          RABBITMQ_DEFAULT_PASS: ci-only-password
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 10
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 8025:8025
+          - 1025:1025
+    env:
+      NOTIFICATIONS_TEST_CONNECTION: Host=localhost;Port=5432;Username=postgres;Password=ci-only-password
+      NOTIFICATIONS_TEST_RABBITMQ: amqp://ci:ci-only-password@localhost:5672
+      NOTIFICATIONS_TEST_MAILPIT: http://localhost:8025
+      NOTIFICATIONS_TEST_SMTP_PORT: "1025"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build
+        run: dotnet build Services/Notifications/NotificationsService.Tests -c Release
+      - name: Tests
+        run: dotnet test Services/Notifications/NotificationsService.Tests -c Release --no-build
+
+  # Smoke: Docker image iz compose-a se podize (migracija, baza, broker) i /health je zdrav.
+  smoke:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      DB_PASSWORD: ci-only-password
+      JWT_SECRET: ci-only-jwt-secret-ci-only-jwt-secret-1234
+      RABBITMQ_PASSWORD: ci-only-password
+      NOTIFICATIONS_API_PORT: "5004"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start notifications.api (with notificationsdb, rabbitmq and mailpit)
+        run: docker compose up -d --build notifications.api
+      - name: Wait for health
+        run: |
+          for _ in $(seq 1 60); do
+            if curl -fs "http://localhost:$NOTIFICATIONS_API_PORT/health"; then exit 0; fi
+            sleep 2
+          done
+          echo "notifications.api did not become healthy" && exit 1
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs notificationsdb rabbitmq mailpit notifications.api
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
