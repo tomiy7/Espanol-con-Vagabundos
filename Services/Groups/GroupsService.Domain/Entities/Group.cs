@@ -112,7 +112,7 @@ public class Group : AggregateRoot
     public bool FormationWindowExpired =>
         FormationWindowEndsAt.HasValue && DateTime.UtcNow > FormationWindowEndsAt.Value;
 
-    public void AddMember(Guid enrollmentId)
+    public void AddMember(Guid enrollmentId, Guid userId)
     {
         if (Status is not (GroupStatus.Forming or GroupStatus.Ready))
             throw new GroupsDomainException($"Cannot join group in status {Status}.");
@@ -125,7 +125,7 @@ public class Group : AggregateRoot
 
         // Race condition (dva paralelna Join-a) resava Version concurrency token.
 
-        _members.Add(new GroupMember(enrollmentId, DateTime.UtcNow));
+        _members.Add(new GroupMember(enrollmentId, userId, DateTime.UtcNow));
         Version++;
         AddDomainEvent(new GroupMemberJoined(Id, enrollmentId));
 
@@ -228,10 +228,12 @@ public class Group : AggregateRoot
         if (Status is not (GroupStatus.Forming or GroupStatus.Ready))
             throw new GroupsDomainException($"Only a forming or ready group can be dissolved (status: {Status}).");
 
+        // Dogadjaj pamti ko je bio u grupi (posle Clear() to vise ne pise nigde).
+        var formerMembers = _members.Select(m => new MemberRef(m.EnrollmentId, m.UserId)).ToList();
         _members.Clear();
         Version++;
         Status = GroupStatus.Dissolved;
-        AddDomainEvent(new GroupDissolved(Id));
+        AddDomainEvent(new GroupDissolved(Id, formerMembers));
     }
 
     // Zatvaranje grupe. Poziva se (1) automatski kad svi clanovi koji nisu otkazali

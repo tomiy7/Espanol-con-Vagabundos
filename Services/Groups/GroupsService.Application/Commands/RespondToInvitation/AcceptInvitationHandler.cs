@@ -48,8 +48,8 @@ public class AcceptInvitationHandler
 
         var group = Group.CreatePair(inviterEnrollment.CourseId);
 
-        group.AddMember(inviterEnrollment.Id);
-        group.AddMember(inviteeEnrollment.Id);
+        group.AddMember(inviterEnrollment.Id, inviterEnrollment.UserId);
+        group.AddMember(inviteeEnrollment.Id, inviteeEnrollment.UserId);
 
         inviterEnrollment.AssignToGroup(group.Id);
         inviteeEnrollment.AssignToGroup(group.Id);
@@ -67,7 +67,6 @@ public class AcceptInvitationHandler
         await _groupRepository.SaveChangesAsync();
         await _invitationRepository.SaveChangesAsync();
         
-        // TODO notifikacija
         
         return new AcceptInvitationResult(group.Id, inviteeEnrollment.Id);
     }

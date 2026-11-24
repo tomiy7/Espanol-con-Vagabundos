@@ -125,7 +125,7 @@ if (rabbitMq.GetValue(nameof(RabbitMqOptions.Enabled), true))
     builder.Services.AddHostedService<OutboxDispatcher>();
 }
 
-// TODO: INotificationService / mejlovi (vidi TODO notifikacija u handlerima).
+// Mejlove ne salje Groups: Notifications servis ih salje na osnovu dogadjaja iz outbox-a.
 
 // Greske: sve odbijene operacije i neocekivani izuzeci postaju ProblemDetails sa stabilnim
 // "code" poljem (vidi GroupsExceptionHandler i ErrorCodes). Kod se dodaje i automatskim

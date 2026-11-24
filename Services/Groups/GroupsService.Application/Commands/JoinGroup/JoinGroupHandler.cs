@@ -44,7 +44,7 @@ public class JoinGroupHandler
         var enrollment = Enrollment.CreateSearching(command.UserId, group.CourseId, EnrollmentType.Group);
 
         var wasReadyBefore = group.Status == GroupStatus.Ready;
-        group.AddMember(enrollment.Id); // baca ako je grupa puna ili nije otvorena
+        group.AddMember(enrollment.Id, enrollment.UserId); // baca ako je grupa puna ili nije otvorena
         enrollment.AssignToGroup(group.Id);
 
         // Ulazak u grupu koja je vec Ready znaci da je i novi upis Ready. Kad grupa
@@ -56,7 +56,6 @@ public class JoinGroupHandler
 
             if (!wasReadyBefore)
             {
-                // TODO notifikacija: grupa je upravo postala Ready - obavestiti ostale clanove.
                 var others = await _enrollmentRepository.GetByGroupIdAsync(group.Id);
                 foreach (var member in others.Where(m => m.Id != enrollment.Id))
                     member.MarkReady();
@@ -67,7 +66,6 @@ public class JoinGroupHandler
         await _enrollmentRepository.SaveChangesAsync();
         await _groupRepository.SaveChangesAsync();
         
-        //TODO notifikacija
 
         return new JoinGroupResult(enrollment.Id, group.Id);
     }

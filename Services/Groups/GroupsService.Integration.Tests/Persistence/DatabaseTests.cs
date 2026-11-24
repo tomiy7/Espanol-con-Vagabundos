@@ -98,10 +98,10 @@ public class DatabaseTests : ApiTestBase
         var groupA = dbA.Groups.Include(g => g.Members).Include(g => g.Slots).Single(g => g.Id == groupId);
         var groupB = dbB.Groups.Include(g => g.Members).Include(g => g.Slots).Single(g => g.Id == groupId);
 
-        groupA.AddMember(Guid.NewGuid());
+        groupA.AddMember(Guid.NewGuid(), Guid.NewGuid());
         dbA.SaveChanges();
 
-        groupB.AddMember(Guid.NewGuid());
+        groupB.AddMember(Guid.NewGuid(), Guid.NewGuid());
         Assert.Throws<DbUpdateConcurrencyException>(() => dbB.SaveChanges());
     }
 

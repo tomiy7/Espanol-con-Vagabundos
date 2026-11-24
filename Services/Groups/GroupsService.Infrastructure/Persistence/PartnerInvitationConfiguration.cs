@@ -13,6 +13,8 @@ public class PartnerInvitationConfiguration : IEntityTypeConfiguration<PartnerIn
 
         builder.Property(i => i.Id).HasColumnName("id");
         builder.Property(i => i.InviterEnrollmentId).HasColumnName("inviter_enrollment_id").IsRequired();
+        builder.Property(i => i.InviterUserId).HasColumnName("inviter_user_id").IsRequired();
+        builder.Property(i => i.CourseId).HasColumnName("course_id").IsRequired();
         builder.Property(i => i.InviteeUserId).HasColumnName("invitee_user_id").IsRequired();
 
         builder.Property(i => i.Status)

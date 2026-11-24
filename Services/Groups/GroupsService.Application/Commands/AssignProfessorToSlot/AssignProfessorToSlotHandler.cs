@@ -40,7 +40,6 @@ public class AssignProfessorToSlotHandler
         await _groupRepository.SaveChangesAsync();
         await scheduleLock.CommitAsync();
         
-        // TODO notifikacija
     }
 
 }

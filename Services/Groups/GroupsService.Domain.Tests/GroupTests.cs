@@ -12,7 +12,7 @@ public class GroupTests
     {
         var g = Group.CreateGroup(Guid.NewGuid(), 7);
         for (var i = 0; i < members; i++)
-            g.AddMember(Guid.NewGuid());
+            g.AddMember(Guid.NewGuid(), Guid.NewGuid());
 
         var days = new[] { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
         for (var i = 0; i < Group.WeeklySlotCount; i++)
@@ -57,7 +57,7 @@ public class GroupTests
         var before = g.Version;
         var enrollmentId = Guid.NewGuid();
 
-        g.AddMember(enrollmentId);
+        g.AddMember(enrollmentId, Guid.NewGuid());
         g.RemoveMember(enrollmentId);
 
         Assert.Equal(before + 2, g.Version);
@@ -68,7 +68,7 @@ public class GroupTests
     {
         var g = GroupWithSlots(0);
         var enrollmentId = Guid.NewGuid();
-        g.AddMember(enrollmentId);
+        g.AddMember(enrollmentId, Guid.NewGuid());
         var before = g.Version;
 
         g.RecordMemberCompleted(enrollmentId);
@@ -82,7 +82,7 @@ public class GroupTests
     {
         var g = Group.CreateGroup(Guid.NewGuid(), 7);
         var ids = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
-        foreach (var id in ids) g.AddMember(id);
+        foreach (var id in ids) g.AddMember(id, Guid.NewGuid());
         Assert.Equal(GroupStatus.Ready, g.Status);
 
         g.RemoveMember(ids[0]);
@@ -94,7 +94,7 @@ public class GroupTests
     public void Dissolve_clears_members_and_only_works_before_start()
     {
         var pair = Group.CreatePair(Guid.NewGuid());
-        pair.AddMember(Guid.NewGuid());
+        pair.AddMember(Guid.NewGuid(), Guid.NewGuid());
         pair.Dissolve();
 
         Assert.Equal(GroupStatus.Dissolved, pair.Status);

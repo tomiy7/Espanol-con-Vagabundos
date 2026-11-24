@@ -162,6 +162,10 @@ namespace GroupsService.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("attempt_number");
 
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -177,6 +181,10 @@ namespace GroupsService.Infrastructure.Migrations
                     b.Property<Guid>("InviterEnrollmentId")
                         .HasColumnType("uuid")
                         .HasColumnName("inviter_enrollment_id");
+
+                    b.Property<Guid>("InviterUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("inviter_user_id");
 
                     b.Property<DateTime?>("RespondedAt")
                         .HasColumnType("timestamp with time zone")
@@ -315,6 +323,10 @@ namespace GroupsService.Infrastructure.Migrations
                             b1.Property<DateTime>("JoinedAt")
                                 .HasColumnType("timestamp with time zone")
                                 .HasColumnName("joined_at");
+
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("user_id");
 
                             b1.Property<Guid>("group_id")
                                 .HasColumnType("uuid");

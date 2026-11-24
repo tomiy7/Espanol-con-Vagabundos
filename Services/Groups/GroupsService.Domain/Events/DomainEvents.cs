@@ -32,8 +32,17 @@ public record EnrollmentCompleted(Guid EnrollmentId);
 
 public record GroupCompleted(Guid GroupId);
 
-public record GroupDissolved(Guid GroupId);
+// Clan grupe u trenutku dogadjaja (upis + korisnik).
+public record MemberRef(Guid EnrollmentId, Guid UserId);
+
+// FormerMembers: ko je bio u grupi pre rasformiranja (grupa ih posle vise nema).
+public record GroupDissolved(Guid GroupId, IReadOnlyList<MemberRef> FormerMembers);
 
 public record EnrollmentCancelled(Guid EnrollmentId);
 
 public record EnrollmentFrozen(Guid EnrollmentId, Guid ApprovedByUserId);
+
+public record EnrollmentUnfrozen(Guid EnrollmentId);
+
+// Grupa je pala ispod minimuma, pa upis vise nije Ready (ceka novog clana).
+public record EnrollmentReturnedToSearching(Guid EnrollmentId);

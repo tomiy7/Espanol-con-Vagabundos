@@ -69,13 +69,13 @@ public class InvitePartnerHandler
                 $"Maximum number of invitation attempts ({_options.PartnerInvitationMaxAttempts}) reached for this partner.");
 
         var invitation = PartnerInvitation.Create(
-            inviterEnrollment.Id, command.InviteeUserId, attemptNumber, _options.PairInvitationExpiryDays);
+            inviterEnrollment.Id, command.InviterUserId, command.CourseId, command.InviteeUserId,
+            attemptNumber, _options.PairInvitationExpiryDays);
 
         await _invitationRepository.AddAsync(invitation);
         await _enrollmentRepository.SaveChangesAsync();
         await _invitationRepository.SaveChangesAsync();
         
-        //TODO notikacija
         
         return new InvitePartnerResult(inviterEnrollment.Id, invitation.Id);
     }
