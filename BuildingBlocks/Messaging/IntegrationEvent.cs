@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Messaging;
 
@@ -16,7 +17,12 @@ public abstract record IntegrationEvent
 // svoj red samo za tipove koje stvarno obradjuje (topic exchange).
 public sealed record EventEnvelope(Guid EventId, string EventType, DateTime OccurredAt, JsonElement Data)
 {
-    public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    // Enum-i kao tekst ("Monday", ne 1) - citljivo i stabilno za druge servise; brojevi se
+    // i dalje prihvataju pri citanju.
+    public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public static string TypeOf<TEvent>() where TEvent : IntegrationEvent => TypeOf(typeof(TEvent));
 

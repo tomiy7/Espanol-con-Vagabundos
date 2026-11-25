@@ -54,7 +54,7 @@ public class OutboxFailureTests : ApiTestBase
 
                 await Eventually(() => Outbox(down).Any(m => m.Attempts > 0), "the dispatcher has tried to send", 20);
                 var pending = Outbox(down);
-                Assert.Equal(new[] { "GroupBecameReady", "GroupStarted" }, pending.Select(m => m.Type));
+                Assert.Equal(new[] { "GroupBecameReady", "GroupStarted" }, pending.Where(m => m.Type.StartsWith("Group")).Select(m => m.Type));
                 Assert.All(pending, m => Assert.False(m.Processed));
                 Assert.False(string.IsNullOrWhiteSpace(pending[0].LastError));
 

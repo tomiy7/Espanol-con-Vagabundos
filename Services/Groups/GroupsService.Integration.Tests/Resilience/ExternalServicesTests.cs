@@ -80,6 +80,24 @@ public class ExternalServiceClientTests
     }
 
     [Fact]
+    public async Task User_lookup_calls_the_auth_admin_endpoint()
+    {
+        Uri? called = null;
+        var directory = new AuthServiceUserDirectory(
+            new HttpClient(new StubHandler((request, _) =>
+            {
+                called = request.RequestUri;
+                return Task.FromResult(Respond(HttpStatusCode.NotFound, ""));
+            })),
+            Options.Create(new AuthServiceOptions { BaseUrl = BaseUrl + "/" }), NullLogger<AuthServiceUserDirectory>.Instance);
+        var userId = Guid.NewGuid();
+
+        await directory.GetUserContactAsync(userId);
+
+        Assert.Equal($"{BaseUrl}/auth/admin/users/{userId}", called?.ToString());
+    }
+
+    [Fact]
     public async Task Healthy_services_return_the_data()
     {
         var userId = Guid.NewGuid();

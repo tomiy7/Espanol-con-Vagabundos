@@ -37,7 +37,7 @@ public class AuthServiceUserDirectory : IUserDirectory
         try
         {
             using var request = new HttpRequestMessage(
-                HttpMethod.Get, $"{_options.BaseUrl.TrimEnd('/')}/admin/users/{userId}");
+                HttpMethod.Get, $"{_options.BaseUrl.TrimEnd('/')}/auth/admin/users/{userId}");
 
             if (!string.IsNullOrWhiteSpace(_options.ServiceAdminToken))
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ServiceAdminToken);

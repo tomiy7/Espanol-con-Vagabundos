@@ -140,6 +140,7 @@ public class Enrollment : AggregateRoot
             throw new GroupsDomainException($"Cannot revert enrollment in status {Status} to Searching.");
 
         Status = EnrollmentStatus.Searching;
+        AddDomainEvent(new EnrollmentReturnedToSearching(Id));
     }
 
     // Grupa je rasformirana (npr. Pair kad partner otkaze pre starta) - upis ostaje
@@ -200,6 +201,7 @@ public class Enrollment : AggregateRoot
 
         CloseFreezePeriod(now ?? DateTime.UtcNow);
         Status = EnrollmentStatus.Active;
+        AddDomainEvent(new EnrollmentUnfrozen(Id));
     }
 
     private void CloseFreezePeriod(DateTime now)

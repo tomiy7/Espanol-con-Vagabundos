@@ -36,10 +36,23 @@ services:
       context: .
       dockerfile: Services/Groups/GroupsService.API/Dockerfile
 
+  notificationsdb:
+    image: postgres:16
+
+  mailpit:
+    image: axllent/mailpit:latest
+
+  notifications.api:
+    image: notifications.api
+    build:
+      context: .
+      dockerfile: Services/Notifications/NotificationsService.API/Dockerfile
+
 volumes:
   auth_data:
   courses_data:
   groups_data:
+  notifications_data:
   payments_data:
   rabbitmq_data:
     

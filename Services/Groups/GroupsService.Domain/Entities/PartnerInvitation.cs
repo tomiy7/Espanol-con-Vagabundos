@@ -11,6 +11,8 @@ namespace GroupsService.Domain.Entities;
 public class PartnerInvitation : AggregateRoot
 {
     public Guid InviterEnrollmentId { get; private set; }
+    public Guid InviterUserId { get; private set; }
+    public Guid CourseId { get; private set; }
     public Guid InviteeUserId { get; private set; }
     public InvitationStatus Status { get; private set; }
 
@@ -25,10 +27,16 @@ public class PartnerInvitation : AggregateRoot
     private PartnerInvitation() { }
 
     public static PartnerInvitation Create(
-        Guid inviterEnrollmentId, Guid inviteeUserId, int attemptNumber, int expiryDays)
+        Guid inviterEnrollmentId, Guid inviterUserId, Guid courseId, Guid inviteeUserId, int attemptNumber, int expiryDays)
     {
         if (inviterEnrollmentId == Guid.Empty)
             throw new GroupsDomainException("Inviter enrollment ID cannot be empty.");
+
+        if (inviterUserId == Guid.Empty)
+            throw new GroupsDomainException("Inviter user ID cannot be empty.");
+
+        if (courseId == Guid.Empty)
+            throw new GroupsDomainException("Course ID cannot be empty.");
 
         if (inviteeUserId == Guid.Empty)
             throw new GroupsDomainException("Invitee user ID cannot be empty.");
@@ -43,6 +51,8 @@ public class PartnerInvitation : AggregateRoot
         {
             Id = Guid.NewGuid(),
             InviterEnrollmentId = inviterEnrollmentId,
+            InviterUserId = inviterUserId,
+            CourseId = courseId,
             InviteeUserId = inviteeUserId,
             AttemptNumber = attemptNumber,
             Status = InvitationStatus.Pending,

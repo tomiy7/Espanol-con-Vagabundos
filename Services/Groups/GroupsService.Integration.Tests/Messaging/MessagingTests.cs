@@ -27,17 +27,19 @@ public class MessagingTests : ApiTestBase
         await AssertStatus(HttpStatusCode.NoContent, await Post(professor, $"/enrollments/{ids[0]}/cancel"));
 
         var outbox = Outbox();
-        Assert.Equal(new[] { "GroupBecameReady", "GroupStarted", "EnrollmentCancelled" }, outbox.Select(m => m.Type));
+        Assert.Equal(3, outbox.Count(m => m.Type == "EnrollmentCreated"));
+        var lifecycle = outbox.Where(m => m.Type != "EnrollmentCreated").ToList();
+        Assert.Equal(new[] { "GroupBecameReady", "GroupStarted", "EnrollmentCancelled" }, lifecycle.Select(m => m.Type));
 
-        var ready = outbox[0].Payload;
+        var ready = lifecycle[0].Payload;
         Assert.Equal(groupId, ready.GetProperty("groupId").GetGuid());
         Assert.Equal(CourseId, ready.GetProperty("courseId").GetGuid());
         Assert.Equal("Group", ready.GetProperty("groupType").GetString());
         Assert.Equal(ids.OrderBy(x => x), ready.GetProperty("memberEnrollmentIds").EnumerateArray().Select(x => x.GetGuid()).OrderBy(x => x));
 
-        var cancelled = outbox[2].Payload;
+        var cancelled = lifecycle[2].Payload;
         Assert.Equal(ids[0], cancelled.GetProperty("enrollmentId").GetGuid());
-        Assert.Equal(outbox[2].Id, cancelled.GetProperty("eventId").GetGuid());
+        Assert.Equal(lifecycle[2].Id, cancelled.GetProperty("eventId").GetGuid());
     }
 
     [IntegrationFact]
@@ -46,10 +48,11 @@ public class MessagingTests : ApiTestBase
         var professor = TestUser.Professor();
         var groupId = await CreateGroup(professor);
         await AddMember(professor, groupId, TestUser.Student());
+        var before = Outbox().Count;
 
         await AssertStatus(HttpStatusCode.BadRequest, await Post(professor, $"/groups/{groupId}/start"));
 
-        Assert.Empty(Outbox());
+        Assert.Equal(before, Outbox().Count);
     }
 
     // ---------- pravi RabbitMQ ----------

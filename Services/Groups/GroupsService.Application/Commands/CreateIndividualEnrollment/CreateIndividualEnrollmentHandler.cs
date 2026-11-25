@@ -39,7 +39,7 @@ public class CreateIndividualEnrollmentHandler
         // termin preko AssignProfessorToSlot (isti endpoint kao za Pair/Group), i tek
         // StartGroupHandler (group.Start()) aktivira pristup kursu.
         var group = Group.CreateIndividual(command.CourseId);
-        group.AddMember(enrollment.Id);
+        group.AddMember(enrollment.Id, enrollment.UserId);
         enrollment.AssignToGroup(group.Id);
         enrollment.MarkReady();
         
@@ -49,7 +49,6 @@ public class CreateIndividualEnrollmentHandler
         await _enrollmentRepository.SaveChangesAsync();
         await _groupRepository.SaveChangesAsync();
         
-        //TODO notifikacija
 
         return new CreateIndividualEnrollmentResult(enrollment.Id, group.Id);
     }

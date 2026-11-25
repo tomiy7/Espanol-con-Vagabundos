@@ -29,6 +29,5 @@ public class DeclineInvitationHandler
         invitation.Decline();
         await _invitationRepository.SaveChangesAsync();
 
-        // TODO notifikacija
     }
 }

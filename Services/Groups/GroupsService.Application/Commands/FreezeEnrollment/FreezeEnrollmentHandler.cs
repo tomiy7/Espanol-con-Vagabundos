@@ -24,6 +24,5 @@ public class FreezeEnrollmentHandler
         enrollment.Freeze(command.ApprovedByUserId);
         await _repository.SaveChangesAsync();
 
-        // TODO notifikacija
     }
 }

@@ -34,6 +34,5 @@ public class StartGroupHandler
         await _groupRepository.SaveChangesAsync();
         await _enrollmentRepository.SaveChangesAsync();
         
-        // TODO notifikacija
     }
 }

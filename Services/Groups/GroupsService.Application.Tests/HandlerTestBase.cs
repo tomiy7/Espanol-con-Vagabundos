@@ -26,7 +26,7 @@ public abstract class HandlerTestBase
     protected readonly IOptions<EnrollmentOptions> Settings = Microsoft.Extensions.Options.Options.Create(new EnrollmentOptions());
     protected readonly Guid CourseId = Guid.NewGuid();
 
-    // Notifikacije jos nisu u repou (TODO u handlerima), pa ih testovi ne prosledjuju.
+    // Mejlove salje Notifications servis na osnovu dogadjaja (outbox), ne handleri.
     protected CancelEnrollmentHandler Cancel() => new(Enrollments, Groups);
 
     protected JoinGroupHandler Join() => new(Enrollments, Groups, NullLogger<JoinGroupHandler>.Instance);
