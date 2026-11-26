@@ -37,3 +37,8 @@ export function changeUserRole(userId: string, role: Role) {
         auth: true,
     });
 }
+
+/** Admin i profesor (profesor cita kontakt ucenika iz svoje grupe). */
+export function getUserById(userId: string) {
+    return apiRequest<UserDetail>("auth", `/auth/admin/users/${userId}`, { auth: true });
+}

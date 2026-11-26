@@ -135,6 +135,16 @@ export default function Header() {
                                         </Link>
                                     )}
 
+                                    {user?.role === "professor" && (
+                                        <Link
+                                            href="/professor"
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className="block px-4 py-3 text-sm text-zinc-700 transition hover:bg-[#fff3c2]"
+                                        >
+                                            Profesorski panel
+                                        </Link>
+                                    )}
+
                                     <div className="border-t border-zinc-100" />
 
                                     <button

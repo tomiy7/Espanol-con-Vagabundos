@@ -303,8 +303,9 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
+    // Admin i profesor: profesor cita kontakt (ime, telefon, mejl) ucenika iz svojih grupa.
     [HttpGet("admin/users/{userId}")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.Admin + "," + Roles.Professor)]
     [ProducesResponseType(
         typeof(UserDetailResponseDto),
         StatusCodes.Status200OK

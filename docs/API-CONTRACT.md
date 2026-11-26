@@ -58,6 +58,12 @@ Telo `{ "role": "student" | "professor" | "admin" }`, vraća `UserDetailResponse
 Greške: `400 INVALID_ROLE`, `400 CANNOT_CHANGE_OWN_ROLE` (admin ne menja sebi ulogu), `404 USER_NOT_FOUND`.
 Nova uloga ulazi u token pri sledećoj prijavi ili `POST /auth/refresh` (refresh čita ulogu iz baze). Koristi ga stranica `/admin/users`.
 
+### 🔧 `GET /auth/admin/users/{userId}` sada [Admin, Professor] (izmenjeno sa frontend strane, molim pregled)
+Profesorski panel (`/professor/groups/{id}`) čita ime, telefon i mejl polaznika svoje grupe. Lista svih korisnika (`GET /auth/admin/users`) ostaje samo za admina.
+
+### ⚠️ Groups → Auth poziv za imena članova (za partnera)
+`AuthServiceUserDirectory` zove `{AuthService:BaseUrl}/admin/users/{id}`, a u `docker-compose.override.yml` je `AuthService__BaseUrl=http://auth.api:8080` (fali `/auth`), i `AuthService__ServiceAdminToken` nije postavljen. Zato `fullName` u `GET /groups/{id}` lokalno uvek stiže `null`. Frontend zato ime i kontakt čita direktno iz Auth-a.
+
 ---
 
 ## Kupovina: PaymentsService
