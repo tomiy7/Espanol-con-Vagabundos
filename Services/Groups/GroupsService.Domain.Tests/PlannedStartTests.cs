@@ -1,4 +1,4 @@
-using GroupsService.Domain.Entities;
+﻿using GroupsService.Domain.Entities;
 using GroupsService.Domain.Events;
 using GroupsService.Domain.Exceptions;
 
@@ -104,6 +104,18 @@ public class PlannedStartTests
         Assert.Equal(second, e.NewAt);
         Assert.Equal(second, g.PlannedStartAt);
         Assert.Equal(1, Count<GroupConfirmed>(g));
+    }
+
+    [Fact]
+    public void Moving_the_date_of_unconfirmed_group_is_not_announced()
+    {
+        var g = GroupWith(2);
+        g.SchedulePlannedStart(Now.AddDays(10), Now);
+
+        g.SchedulePlannedStart(Now.AddDays(14), Now);
+
+        Assert.Equal(0, Count<FirstLessonRescheduled>(g));
+        Assert.Null(g.ConfirmedAt);
     }
 
     [Fact]

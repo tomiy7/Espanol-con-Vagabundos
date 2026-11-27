@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GroupsService.Integration.Tests.Infrastructure;
@@ -88,6 +88,19 @@ public class PlannedStartTests : ApiTestBase
         Assert.Equal(moved, rescheduled.GetProperty("newFirstLessonAt").GetDateTime().ToUniversalTime());
         Assert.Equal(students.Select(s => s.Id).OrderBy(x => x), MemberUsers(rescheduled));
         Assert.Single(Events(), e => e.Type == "GroupConfirmed");
+    }
+
+    [IntegrationFact]
+    public async Task Moving_the_date_before_confirmation_sends_no_event()
+    {
+        var professor = TestUser.Professor();
+        var groupId = await CreateGroup(professor);
+        await AddMember(professor, groupId, TestUser.Student());
+        await Schedule(professor, groupId, FirstLesson);
+
+        await AssertStatus(HttpStatusCode.NoContent, await Schedule(professor, groupId, FirstLesson.AddDays(3)));
+
+        Assert.DoesNotContain(Events(), e => e.Type is "FirstLessonRescheduled" or "GroupConfirmed");
     }
 
     [IntegrationFact]

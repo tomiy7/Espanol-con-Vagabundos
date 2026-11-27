@@ -24,7 +24,8 @@ a rok za (prvu) uplatu je pre prvog časa. Groups danas zna datum tek na `Start`
 - `Group.PlannedStartAt` (UTC, nullable) i `Group.ConfirmedAt` (UTC, nullable). Migracija preko EF-a.
 - `Group.SchedulePlannedStart(DateTime at, DateTime now)`:
   - samo u statusu Forming ili Ready; datum mora biti u budućnosti i najviše godinu dana unapred;
-  - prvi put postavljen → `FirstLessonScheduled`; promena postojećeg → `FirstLessonRescheduled(old, new)`;
+  - prvi put postavljen → `FirstLessonScheduled`; promena postojećeg kod **potvrđene** grupe → `FirstLessonRescheduled(old, new)`
+    (pre potvrde je promena interna — članovi stari datum nisu ni dobili);
     isti datum ponovo → ništa.
 - Potvrda: kad je grupa Ready **i** ima `PlannedStartAt`, a `ConfirmedAt` je prazan → `ConfirmedAt = now`
   i domenski događaj `GroupConfirmed`. Proverava se posle `AddMember` i posle `SchedulePlannedStart`.
@@ -47,6 +48,9 @@ a rok za (prvu) uplatu je pre prvog časa. Groups danas zna datum tek na `Start`
   za profesora/admina; nema automatskog izbacivanja (već dogovoreno).
 - Iznos dolazi od servera (cena iz Courses po tipu upisa, zaključana u trenutku izdavanja), nikad od klijenta.
 - PDF se ne čuva: generiše se na zahtev iz sačuvanih podataka. Izgled: Nalog za uplatu (Obrazac 1) + NBS IPS QR.
+- **Otvoreno (pitati na početku dela 3):** grupa pokrenuta bez planiranog datuma (i grupe koje su već bile Ready
+  pre migracije) nikad ne dobijaju `GroupConfirmed`, pa ne bi dobile uplatnice. Opcije: (a) `Start` potvrđuje
+  nepotvrđenu grupu sa `StartedAt` kao datumom prvog časa; (b) Payments reaguje i na `GroupStarted` za članove bez uplatnice.
 
 ## Testovi
 - Domen: postavljanje/pomeranje datuma, potvrda tačno jednom, redosled (prvo datum pa članovi i obrnuto),

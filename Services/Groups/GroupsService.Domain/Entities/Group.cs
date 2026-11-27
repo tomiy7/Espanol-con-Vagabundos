@@ -165,9 +165,11 @@ public class Group : AggregateRoot
         if (PlannedStartAt == at)
             return;
 
+        // Javno pomeranje samo za potvrdjenu grupu: samo njeni clanovi znaju stari datum
+        // (i samo za nju postoje uplatnice). Pre potvrde je promena interna.
         var old = PlannedStartAt;
         PlannedStartAt = at;
-        AddDomainEvent(old.HasValue
+        AddDomainEvent(old.HasValue && ConfirmedAt.HasValue
             ? new FirstLessonRescheduled(Id, old.Value, at)
             : new FirstLessonScheduled(Id));
 
