@@ -1,4 +1,4 @@
-using NotificationsService.API.Options;
+﻿using NotificationsService.API.Options;
 using NotificationsService.API.Templates;
 
 namespace NotificationsService.Tests.Templates;
@@ -28,6 +28,7 @@ public class SerbianEmailTemplatesTests
             data.Add("started" + suffix, Templates.GroupStarted(name, course, slots, at));
             data.Add("dissolved Pair" + suffix, Templates.GroupDissolved(name, course, "Pair"));
             data.Add("dissolved Group" + suffix, Templates.GroupDissolved(name, course, "Group"));
+            data.Add("rescheduled" + suffix, Templates.FirstLessonRescheduled(name, course, at, at.AddDays(7)));
             data.Add("frozen" + suffix, Templates.EnrollmentFrozen(name, course));
             data.Add("unfrozen" + suffix, Templates.EnrollmentUnfrozen(name, course));
             data.Add("cancelled" + suffix, Templates.EnrollmentCancelled(name, course));
@@ -73,6 +74,17 @@ public class SerbianEmailTemplatesTests
         Assert.Contains("ponedeljak u 18:00", message.Text);
         Assert.Contains("četvrtak u 09:30", message.Text);
         Assert.Contains("1. 12. 2026.", message.Text);
+    }
+
+    [Fact]
+    public void Rescheduled_first_lesson_shows_new_and_old_local_time()
+    {
+        var message = Templates.FirstLessonRescheduled("Ana", "Španski A1",
+            new DateTime(2026, 12, 1, 17, 0, 0, DateTimeKind.Utc), new DateTime(2026, 12, 8, 17, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal("Prvi čas je pomeren", message.Subject);
+        Assert.Contains("„Španski A1“", message.Text);
+        Assert.Contains("Novi termin: 8. 12. 2026. u 18:00 (umesto 1. 12. 2026. u 18:00)", message.Text);
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-using Messaging.Contracts;
+﻿using Messaging.Contracts;
 using Messaging.RabbitMq;
 using Microsoft.EntityFrameworkCore;
 using NotificationsService.API.Data;
@@ -51,7 +51,8 @@ if (rabbitMq.GetValue(nameof(RabbitMqOptions.Enabled), true))
         .AddHandler<EnrollmentCompleted, EnrollmentCompletedHandler>()
         .AddHandler<GroupBecameReady, GroupBecameReadyHandler>()
         .AddHandler<GroupStarted, GroupStartedHandler>()
-        .AddHandler<GroupDissolved, GroupDissolvedHandler>();
+        .AddHandler<GroupDissolved, GroupDissolvedHandler>()
+        .AddHandler<FirstLessonRescheduled, FirstLessonRescheduledHandler>();
 }
 
 var app = builder.Build();

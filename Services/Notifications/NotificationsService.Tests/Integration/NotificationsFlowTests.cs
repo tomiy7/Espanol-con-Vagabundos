@@ -1,4 +1,4 @@
-using Messaging.Contracts;
+﻿using Messaging.Contracts;
 using NotificationsService.API.Data;
 using NotificationsService.API.Options;
 using NotificationsService.Tests.Infrastructure;
@@ -82,6 +82,24 @@ public class NotificationsFlowTests : IAsyncLifetime
             Assert.Contains($"Zdravo {student.FullName}", mail.Text);
             Assert.Contains("ponedeljak u 18:00", mail.Text);
             Assert.Contains("sreda u 18:00", mail.Text);
+        }
+    }
+
+    [IntegrationFact]
+    public async Task Moved_first_lesson_mails_every_member_the_new_time()
+    {
+        var students = new[] { _factory.Users.Add("Ana"), _factory.Users.Add("Ivan") };
+        var course = _factory.Courses.Add("A2");
+
+        await Publish(new FirstLessonRescheduled(Guid.NewGuid(), course,
+            new DateTime(2026, 12, 1, 17, 0, 0, DateTimeKind.Utc), new DateTime(2026, 12, 8, 17, 0, 0, DateTimeKind.Utc),
+            students.Select(s => new GroupMemberInfo(Guid.NewGuid(), s.UserId)).ToList()));
+
+        foreach (var student in students)
+        {
+            var mail = Assert.Single(await _factory.Mail.WaitForAsync(student.Email, 1));
+            Assert.Equal("Prvi čas je pomeren", mail.Subject);
+            Assert.Contains("8. 12. 2026. u 18:00", mail.Text);
         }
     }
 
