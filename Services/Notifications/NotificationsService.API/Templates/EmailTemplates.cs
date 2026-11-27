@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using Microsoft.Extensions.Options;
 using NotificationsService.API.Options;
@@ -23,6 +23,7 @@ public interface IEmailTemplates
     EmailMessage ReturnedToSearching(string? name, string? course);
     EmailMessage GroupStarted(string? name, string? course, IReadOnlyList<WeeklySlot> schedule, DateTime unlockStartsAtUtc);
     EmailMessage GroupDissolved(string? name, string? course, string groupType);
+    EmailMessage FirstLessonRescheduled(string? name, string? course, DateTime oldAtUtc, DateTime newAtUtc);
     EmailMessage EnrollmentFrozen(string? name, string? course);
     EmailMessage EnrollmentUnfrozen(string? name, string? course);
     EmailMessage EnrollmentCancelled(string? name, string? course);

@@ -1,4 +1,4 @@
-namespace GroupsService.API.DTOs;
+﻿namespace GroupsService.API.DTOs;
 
 public class CreateIndividualEnrollmentRequest
 {
@@ -38,6 +38,13 @@ public class InvitePartnerRequest
 {
     public Guid CourseId { get; set; }
     public Guid InviteeUserId { get; set; }
+}
+
+// Planirani datum i vreme prvog casa. Preporuka je slati sa zonom (npr. "...Z" ili "+01:00");
+// bez zone se tumaci kao UTC.
+public class SchedulePlannedStartRequest
+{
+    public DateTime PlannedStartAt { get; set; }
 }
 
 // Body je opcioni - "" ili bez body-ja znaci force=false (default). Admin eksplicitno

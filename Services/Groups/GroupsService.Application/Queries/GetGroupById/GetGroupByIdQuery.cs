@@ -22,5 +22,7 @@ public record GroupDetailDto(
     int MaxSize,
     DateTime? FormationWindowEndsAt,
     DateTime? StartedAt,
+    DateTime? PlannedStartAt,
+    DateTime? ConfirmedAt,
     List<SlotDto> Slots,
     List<GroupMemberDto> Members);

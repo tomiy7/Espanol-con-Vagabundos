@@ -46,3 +46,14 @@ public record EnrollmentUnfrozen(Guid EnrollmentId);
 
 // Grupa je pala ispod minimuma, pa upis vise nije Ready (ceka novog clana).
 public record EnrollmentReturnedToSearching(Guid EnrollmentId);
+// Planirani datum prvog casa je prvi put postavljen (interni; javno izlazi GroupConfirmed).
+public record FirstLessonScheduled(Guid GroupId);
+
+// Grupa prvi put ima i dovoljno clanova i datum prvog casa - desava se tacno jednom.
+// Payments na ovo izdaje uplatnice.
+public record GroupConfirmed(Guid GroupId);
+
+// Clan je usao u vec potvrdjenu grupu (njemu treba posebna uplatnica).
+public record MemberJoinedConfirmedGroup(Guid GroupId, Guid EnrollmentId, Guid UserId);
+
+public record FirstLessonRescheduled(Guid GroupId, DateTime OldAt, DateTime NewAt);

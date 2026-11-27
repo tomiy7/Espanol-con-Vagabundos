@@ -46,6 +46,8 @@ public class GetGroupByIdHandler
             MaxSize: group.MaxSize,
             FormationWindowEndsAt: group.FormationWindowEndsAt,
             StartedAt: group.StartedAt,
+            PlannedStartAt: group.PlannedStartAt,
+            ConfirmedAt: group.ConfirmedAt,
             Slots: group.Slots
                 .OrderBy(s => s.SlotIndex)
                 .Select(s => new SlotDto(s.SlotIndex, s.DayOfWeek, s.Time, s.ProfessorId))

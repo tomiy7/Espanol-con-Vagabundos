@@ -1,4 +1,4 @@
-using NotificationsService.API.Options;
+﻿using NotificationsService.API.Options;
 
 namespace NotificationsService.API.Templates;
 
@@ -109,6 +109,13 @@ public sealed class SerbianEmailTemplates : IEmailTemplates
                 .Paragraph("Tvoja prijava je i dalje aktivna — javićemo ti sledeći korak.");
         return mail.Build("Promena u tvojoj prijavi");
     }
+
+    public EmailMessage FirstLessonRescheduled(string? name, string? course, DateTime oldAtUtc, DateTime newAtUtc) =>
+        Mail(name)
+            .Paragraph($"Prvi čas za {Course(course)} je pomeren.")
+            .Paragraph($"Novi termin: {DateTimeText(newAtUtc)} (umesto {DateTimeText(oldAtUtc)}).")
+            .Paragraph("Ako novi termin ne odgovara, javi nam se odgovorom na ovaj mejl.")
+            .Build("Prvi čas je pomeren");
 
     public EmailMessage EnrollmentFrozen(string? name, string? course) =>
         Mail(name)

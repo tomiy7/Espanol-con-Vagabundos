@@ -66,3 +66,19 @@ public sealed record InvitationAccepted(
 
 public sealed record InvitationDeclined(
     Guid InvitationId, Guid InviterUserId, Guid InviteeUserId, Guid CourseId) : IntegrationEvent;
+
+// Grupa prvi put ima i dovoljno clanova i planirani datum prvog casa (desava se jednom).
+// Payments izdaje uplatnice clanovima; rokovi se racunaju od FirstLessonAt.
+public sealed record GroupConfirmed(
+    Guid GroupId, Guid CourseId, string GroupType, DateTime FirstLessonAt,
+    IReadOnlyList<GroupMemberInfo> Members) : IntegrationEvent;
+
+// Clan je usao u vec potvrdjenu grupu - njemu treba uplatnica.
+public sealed record MemberJoinedConfirmedGroup(
+    Guid GroupId, Guid CourseId, string GroupType, DateTime FirstLessonAt,
+    GroupMemberInfo Member) : IntegrationEvent;
+
+// Planirani datum prvog casa je pomeren (rokovi neplacenih rata se pomeraju, ucenici dobijaju mejl).
+public sealed record FirstLessonRescheduled(
+    Guid GroupId, Guid CourseId, DateTime OldFirstLessonAt, DateTime NewFirstLessonAt,
+    IReadOnlyList<GroupMemberInfo> Members) : IntegrationEvent;

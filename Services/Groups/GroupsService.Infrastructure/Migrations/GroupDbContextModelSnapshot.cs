@@ -107,6 +107,10 @@ namespace GroupsService.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
                     b.Property<Guid>("CourseId")
                         .HasColumnType("uuid")
                         .HasColumnName("course_id");
@@ -118,6 +122,10 @@ namespace GroupsService.Infrastructure.Migrations
                     b.Property<DateTime?>("FormationWindowEndsAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("formation_window_ends_at");
+
+                    b.Property<DateTime?>("PlannedStartAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("planned_start_at");
 
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("timestamp with time zone")

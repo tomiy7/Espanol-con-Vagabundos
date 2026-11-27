@@ -1,4 +1,4 @@
-using Messaging;
+﻿using Messaging;
 using Messaging.Contracts;
 using Microsoft.Extensions.Options;
 using NotificationsService.API.Options;
@@ -159,6 +159,18 @@ public sealed class GroupStartedHandler(NotificationContext ctx) : IIntegrationE
         foreach (var member in e.Members)
             await ctx.SendAsync(e, member.UserId, "group-started",
                 to => ctx.Templates.GroupStarted(to.FullName, course, schedule, e.UnlockStartsAt), ct);
+    }
+}
+
+// Pomeren datum prvog casa: mejl svim clanovima grupe.
+public sealed class FirstLessonRescheduledHandler(NotificationContext ctx) : IIntegrationEventHandler<FirstLessonRescheduled>
+{
+    public async Task HandleAsync(FirstLessonRescheduled e, CancellationToken ct)
+    {
+        var course = await ctx.CourseAsync(e.CourseId, ct);
+        foreach (var member in e.Members)
+            await ctx.SendAsync(e, member.UserId, "first-lesson-rescheduled",
+                to => ctx.Templates.FirstLessonRescheduled(to.FullName, course, e.OldFirstLessonAt, e.NewFirstLessonAt), ct);
     }
 }
 

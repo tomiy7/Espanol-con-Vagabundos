@@ -3,7 +3,7 @@
 > Živi dokument: šta je urađeno i šta je ostalo. Kad se stavka završi ili se pojavi nova,
 > menjati ovde. Arhitekturalne odluke su u [ARCHITECTURE.md](ARCHITECTURE.md).
 
-Poslednja izmena: 2026-11-24
+Poslednja izmena: 2026-11-25
 
 ---
 
@@ -23,10 +23,15 @@ Poslednja izmena: 2026-11-24
 
 ## Sledeće (redosled)
 
-### 1. Groups ↔ Payments
-- Uplatnica kad je grupa popunjena i ima datum prvog časa (`GroupBecameReady` / `GroupStarted` već nose članove).
-- Pravila su još nacrt: jedna uplata ili dve rate, ručna potvrda uplate (profesor/admin), povraćaj.
-  Rokovi i procenti su podešavanja, ne konstante u kodu.
+### 1. Groups ↔ Payments (tri dela)
+1. **Groups: planirani datum prvog časa** — `PUT /groups/{id}/planned-start`, događaji `GroupConfirmed`,
+   `MemberJoinedConfirmedGroup`, `FirstLessonRescheduled` (+ mejl). Dizajn:
+   [specs/2026-11-25-groups-first-lesson-date-design.md](superpowers/specs/2026-11-25-groups-first-lesson-date-design.md).
+2. **Courses dorada** — tri cene po kursu (individualno, par, grupa), slojevi, testovi, CI, Dockerfile, `/health`.
+3. **Payments prerada** — uplatnica iz događaja (iznos sa servera, zaključan pri izdavanju), cela suma ili dve rate,
+   rokovi od datuma prvog časa (pomeraju se za neplaćene), blaga strogost (zakasnela = oznaka za osoblje),
+   PDF na zahtev u izgledu Naloga za uplatu (Obrazac 1) + NBS IPS QR, testovi, CI, compose.
+   Pravila su podešavanja, ne konstante u kodu.
 
 ### 2. Bezbednosna runda
 - **Service-to-service autentikacija.** Notifications i Groups sada čitaju korisnike iz Auth-a statičkim
