@@ -210,8 +210,9 @@ public class Group : AggregateRoot
         }
     }
 
-    // allowReassign=false: slot koji vec ima profesora moze da se promeni samo uz
-    // allowReassign=true (admin). Ponovna dodela istih vrednosti je uvek ok.
+    // allowReassign=false: slot koji vec ima profesora ne moze da se promeni (zastita od
+    // slucajne izmene); osoblje (profesor ili admin) salje allowReassign=true.
+    // Ponovna dodela istih vrednosti je uvek ok.
     public void AssignProfessorToSlot(
         int slotIndex, DayOfWeek dayOfWeek, TimeOnly time, Guid professorId, bool allowReassign = false)
     {
@@ -224,7 +225,7 @@ public class Group : AggregateRoot
         var changesExisting = slot.IsAssigned
             && (slot.ProfessorId != professorId || slot.DayOfWeek != dayOfWeek || slot.Time != time);
         if (changesExisting && !allowReassign)
-            throw new GroupsDomainException("This slot already has a professor assigned. Only an admin can change it.");
+            throw new GroupsDomainException("This slot already has a professor assigned and reassigning is not allowed.");
 
         slot.Assign(dayOfWeek, time, professorId);
         AddDomainEvent(new SlotAssigned(Id, slotIndex, professorId));

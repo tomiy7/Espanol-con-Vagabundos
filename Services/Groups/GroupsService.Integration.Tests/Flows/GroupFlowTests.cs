@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using GroupsService.Integration.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -402,23 +402,26 @@ public class GroupFlowTests : ApiTestBase
     // ---------- termini ----------
 
     [IntegrationFact]
-    public async Task Assigned_slot_can_only_be_changed_by_an_admin()
+    public async Task Assigned_slot_can_be_changed_by_professors_and_admins_and_is_audited()
     {
         var professor = TestUser.Professor();
         var otherProfessor = TestUser.Professor();
         var admin = TestUser.Admin();
         var groupId = await CreateGroup(professor);
-        var change = new { slotIndex = 0, dayOfWeek = "Tuesday", time = "17:00:00", professorId = otherProfessor.Id };
+        var byProfessor = new { slotIndex = 0, dayOfWeek = "Tuesday", time = "17:00:00", professorId = otherProfessor.Id };
+        var byAdmin = new { slotIndex = 1, dayOfWeek = "Thursday", time = "10:00:00", professorId = otherProfessor.Id };
 
-        var byProfessor = await Post(professor, $"/groups/{groupId}/assign-professor-slot", change);
-        await AssertStatus(HttpStatusCode.BadRequest, byProfessor);
-        Assert.Equal("CANNOT_ASSIGN", await ErrorCode(byProfessor));
+        await AssertStatus(HttpStatusCode.NoContent, await Post(professor, $"/groups/{groupId}/assign-professor-slot", byProfessor));
+        await AssertStatus(HttpStatusCode.NoContent, await Post(admin, $"/groups/{groupId}/assign-professor-slot", byAdmin));
 
-        await AssertStatus(HttpStatusCode.NoContent, await Post(admin, $"/groups/{groupId}/assign-professor-slot", change));
-        var slot0 = (await GetGroup(admin, groupId)).GetProperty("slots").EnumerateArray()
-            .First(s => s.GetProperty("slotIndex").GetInt32() == 0);
+        var slots = (await GetGroup(admin, groupId)).GetProperty("slots").EnumerateArray().ToList();
+        var slot0 = slots.First(s => s.GetProperty("slotIndex").GetInt32() == 0);
         Assert.Equal(otherProfessor.Id, slot0.GetProperty("professorId").GetGuid());
         Assert.Equal("Tuesday", slot0.GetProperty("dayOfWeek").GetString());
+        Assert.Equal("Thursday", slots.First(s => s.GetProperty("slotIndex").GetInt32() == 1).GetProperty("dayOfWeek").GetString());
+
+        var audit = await Json(await Get(admin, $"/audit?entityId={groupId}&actorUserId={professor.Id}"));
+        Assert.Contains(audit.EnumerateArray(), a => a.GetProperty("action").GetString() == "AssignSlot");
     }
 
     [IntegrationFact]

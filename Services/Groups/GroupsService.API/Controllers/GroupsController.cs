@@ -18,7 +18,7 @@ using GroupsService.Domain.Enums;
 namespace GroupsService.API.Controllers;
 
 // Grupe i termini. Sve osim liste dostupnih grupa je za osoblje (profesor ili admin);
-// zatvaranje grupe i izmena vec dodeljenog termina su samo za admina.
+// profesori imaju ista prava kao admin, a trag svake akcije ostaje u audit logu.
 [Route("groups")]
 public class GroupsController : ApiControllerBase
 {
@@ -129,7 +129,7 @@ public class GroupsController : ApiControllerBase
     }
 
     // Dodela ili izmena profesora i termina (za Pair/Individual profesor potvrdjuje
-    // termin tek posle upisa). Vec dodeljen termin menja samo admin.
+    // termin tek posle upisa). Vec dodeljen termin menja osoblje (zapis u audit logu).
     [HttpPost("{groupId:guid}/assign-professor-slot")]
     [Authorize(Roles = Roles.Staff)]
     [ErrorCode(ErrorCodes.CannotAssign)]
@@ -139,7 +139,7 @@ public class GroupsController : ApiControllerBase
     public async Task<IActionResult> AssignProfessorToSlot(Guid groupId, AssignProfessorToSlotRequest request)
     {
         await _assignProfessor.Handle(new AssignProfessorToSlotCommand(
-            groupId, request.SlotIndex, request.DayOfWeek, request.Time, request.ProfessorId, IsAdmin));
+            groupId, request.SlotIndex, request.DayOfWeek, request.Time, request.ProfessorId, IsStaff));
 
         await _audit.RecordAsync(CurrentUserId, "AssignSlot", "Group", groupId,
             $"slot={request.SlotIndex}, {request.DayOfWeek} {request.Time}, professor={request.ProfessorId}");
@@ -183,10 +183,10 @@ public class GroupsController : ApiControllerBase
         return NoContent();
     }
 
-    // Rucno zatvaranje (samo admin, tesko se vraca). Automatski se grupa zatvara kad svi
+    // Rucno zatvaranje (osoblje, tesko se vraca - zapis u audit logu). Automatski se grupa zatvara kad svi
     // clanovi koji nisu otkazani ili zamrznuti zavrse kurs (vidi CourseCompletedHandler).
     [HttpPost("{groupId:guid}/complete")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.Staff)]
     [ErrorCode(ErrorCodes.CannotComplete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]

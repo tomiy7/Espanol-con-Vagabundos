@@ -1,4 +1,4 @@
-using GroupsService.Domain.Entities;
+﻿using GroupsService.Domain.Entities;
 using GroupsService.Domain.Enums;
 using GroupsService.Domain.Exceptions;
 
@@ -112,6 +112,43 @@ public class EnrollmentTests
 
         Assert.Equal(EnrollmentStatus.Searching, e.Status);
         Assert.Null(e.GroupId);
+    }
+
+    // ---------- pristup posle zavrsetka ----------
+
+    [Fact]
+    public void Active_enrollment_grants_access_without_an_end_date()
+    {
+        var e = NewActive();
+
+        Assert.True(e.GrantsAccess(DateTime.UtcNow, completedAccessDays: 30));
+        Assert.Null(e.AccessUntil(30));
+    }
+
+    [Fact]
+    public void Completed_enrollment_grants_access_only_inside_the_window()
+    {
+        var e = NewActive();
+        e.Complete();
+        var completedAt = e.CompletedAt!.Value;
+
+        Assert.Equal(completedAt.AddDays(30), e.AccessUntil(30));
+        Assert.True(e.GrantsAccess(completedAt.AddDays(29), completedAccessDays: 30));
+        Assert.False(e.GrantsAccess(completedAt.AddDays(30), completedAccessDays: 30));
+        Assert.False(e.GrantsAccess(completedAt.AddSeconds(1), completedAccessDays: 0));
+    }
+
+    [Fact]
+    public void Frozen_and_cancelled_enrollments_grant_no_access()
+    {
+        var frozen = NewActive();
+        frozen.Freeze(Guid.NewGuid(), T0.AddDays(1));
+        var cancelled = NewActive();
+        cancelled.Cancel();
+
+        Assert.False(frozen.GrantsAccess(DateTime.UtcNow, 30));
+        Assert.False(cancelled.GrantsAccess(DateTime.UtcNow, 30));
+        Assert.Null(cancelled.AccessUntil(30));
     }
 }
 

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using GroupsService.Application.Commands.CourseCompleted;
 using GroupsService.Integration.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +26,7 @@ public class CourseCompletionTests : ApiTestBase
     }
 
     [IntegrationFact]
-    public async Task Completing_the_course_marks_the_enrollment_Completed_and_removes_access()
+    public async Task Completed_course_stays_readable_for_a_while_and_says_until_when()
     {
         var (_, _, students, ids) = await ActiveGroup();
 
@@ -34,9 +34,18 @@ public class CourseCompletionTests : ApiTestBase
 
         Assert.Equal("Completed", await EnrollmentStatus(students[0], ids[0]));
         var mine = await MyEnrollments(students[0]);
-        Assert.NotEqual(System.Text.Json.JsonValueKind.Null, mine[0].GetProperty("completedAt").ValueKind);
-        Assert.False((await Access(students[0])).GetProperty("hasAccess").GetBoolean());
-        Assert.True((await Access(students[1])).GetProperty("hasAccess").GetBoolean());
+        var completedAt = mine[0].GetProperty("completedAt").GetDateTime().ToUniversalTime();
+
+        var finished = await Access(students[0]);
+        Assert.True(finished.GetProperty("hasAccess").GetBoolean());
+        Assert.Equal(ids[0], finished.GetProperty("enrollmentId").GetGuid());
+        Assert.True(finished.GetProperty("unlockedLessons").GetInt32() > 0);
+        Assert.Equal(completedAt.AddDays(30), finished.GetProperty("accessUntil").GetDateTime().ToUniversalTime(),
+            TimeSpan.FromSeconds(1));
+
+        var active = await Access(students[1]);
+        Assert.True(active.GetProperty("hasAccess").GetBoolean());
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, active.GetProperty("accessUntil").ValueKind);
     }
 
     [IntegrationFact]

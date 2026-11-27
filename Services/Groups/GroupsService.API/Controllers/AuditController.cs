@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GroupsService.API.Constants;
 using GroupsService.Application.Interfaces;
 
 namespace GroupsService.API.Controllers;
 
-// Pregled traga ko je sta uradio (samo admin). entityId = id grupe ili upisa.
+// Pregled traga ko je sta uradio (osoblje). entityId = id grupe ili upisa.
 [Route("audit")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Roles = Roles.Staff)]
 public class AuditController : ApiControllerBase
 {
     private readonly IAuditLog _audit;
