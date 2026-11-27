@@ -36,10 +36,10 @@ Poslednja izmena: 2026-11-27
    PDF na zahtev u izgledu Naloga za uplatu (Obrazac 1) + NBS IPS QR, testovi, CI, compose.
    Pravila su podešavanja, ne konstante u kodu.
    Akcije/popusti (po datumima) i kasnije paketi u Payments-u; unose ih profesor i admin.
-4. **Profesori ≈ admin u Groups-u** — ručno zatvaranje grupe, izmena dodeljenog termina i audit log i za profesore (dogovoreno 2026-11-27).
+4. ✅ **Profesori ≈ admin u Groups-u** — ručno zatvaranje grupe, izmena dodeljenog termina i audit log i za profesore.
 5. **Courses: progres** (`/progress/...` iz front ugovora) i `CourseCompleted` — prvo dogovor šta je „završen kurs“.
-6. **Pristup posle završetka kursa** (Groups) — završen upis i dalje vidi materijal određeni period
-   (podešavanje, npr. N dana od `CompletedAt`); `/enrollments/access` vraća i `accessUntil`, a front prikazuje
+6. ✅ **Pristup posle završetka kursa** (Groups) — završen upis i dalje vidi materijal određeni period
+   (`Enrollment:CompletedAccessDays`, podrazumevano 30 dana od `CompletedAt`); `/enrollments/access` vraća i `accessUntil`, a front prikazuje
    „Sadržaj kursa možete da vidite do ...“. Istorija upisa (aktivni, zamrznuti, završeni) ostaje u `GET /enrollments/mine`.
    **Otvoreno:** da li zamrznut učenik vidi sadržaj.
 7. **Prikaz cena u drugim valutama** — srednji kurs NBS, samo informativno (plaća se u RSD).

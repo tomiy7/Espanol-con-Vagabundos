@@ -4,10 +4,6 @@
 > „kupi kurs → uplata → upis u Courses“. Poslovna odluka: **prvo raspoređivanje u grupu, pa uplata.**
 > Kad se nešto promeni na backendu, menja se ovaj fajl.
 
-Oznake: ✅ radi na `dev` · 🔜2 stiže u delu 2 (Courses) · 🔜3 stiže u delu 3 (Payments) · ❓ za dogovor
-
-Poslednja izmena: 2026-11-27
-
 ---
 
 ## 1. Šta se menja u odnosu na `API-CONTRACT.md`
@@ -78,11 +74,12 @@ Zamenjuje `GET /courses/my`.
 ### ✅ `GET /enrollments/access?courseId={id}` [prijavljen]
 Zamenjuje `GET /courses/{id}/access` („Kupi kurs“ / „Nastavi učenje“).
 ```json
-{ "hasAccess": true, "enrollmentId": "guid", "unlockedLessons": 6 }
+{ "hasAccess": true, "enrollmentId": "guid", "unlockedLessons": 6, "accessUntil": null }
 ```
 `hasAccess` je `true` samo za aktivan upis (grupa je počela). Za upis koji čeka grupu: `GET /enrollments/mine`.
-Planirano: posle završetka kursa materijal ostaje dostupan još neko vreme — odgovor će dobiti `accessUntil`
-(za poruku „Sadržaj kursa možete da vidite do ...“). Zamrznut upis: za dogovor.
+Posle završetka kursa materijal ostaje dostupan još 30 dana (podešavanje `Enrollment:CompletedAccessDays`):
+tada je `accessUntil` datum isteka — za poruku „Sadržaj kursa možete da vidite do ...“. Za aktivan upis je `null`.
+Zamrznut upis: nema pristup (za dogovor).
 
 ---
 
@@ -158,8 +155,11 @@ Do tada progres ostaje u pregledaču.
 |---|---|---|---|
 | Svoji upisi, pristup, lekcije | ✅ | ✅ | ✅ |
 | Grupe: pravljenje, članovi, termini, datum, start, zamrzavanje | | ✅ | ✅ |
-| Zatvaranje grupe, izmena već dodeljenog termina, audit log | | | ✅ |
+| Zatvaranje grupe, izmena već dodeljenog termina, audit log (`GET /audit`) | | ✅ | ✅ |
 | Potvrda uplate, akcije/popusti 🔜3 | | ✅ | ✅ |
+
+Profesori imaju ista prava kao admin. Jedina razlika u Groups-u: profesor otvara grupu samo sa sobom kao
+profesorom u terminima, admin može da upiše bilo kog profesora.
 
 ---
 
