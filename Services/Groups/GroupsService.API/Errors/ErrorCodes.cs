@@ -20,6 +20,7 @@ public static class ErrorCodes
     public const string CannotCancel = "CANNOT_CANCEL";
     public const string CannotFreeze = "CANNOT_FREEZE";
     public const string CannotUnfreeze = "CANNOT_UNFREEZE";
+    public const string CannotChangePaymentPlan = "CANNOT_CHANGE_PAYMENT_PLAN";
 
     // grupe
     public const string CannotCreateGroup = "CANNOT_CREATE_GROUP";

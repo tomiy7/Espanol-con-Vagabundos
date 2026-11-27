@@ -1,9 +1,10 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GroupsService.API.Constants;
 using GroupsService.API.DTOs;
 using GroupsService.API.Errors;
 using GroupsService.Application.Commands.CancelEnrollment;
+using GroupsService.Application.Commands.ChangePaymentPlan;
 using GroupsService.Application.Commands.CreateIndividualEnrollment;
 using GroupsService.Application.Commands.FreezeEnrollment;
 using GroupsService.Application.Commands.InvitePartner;
@@ -29,6 +30,7 @@ public class EnrollmentsController : ApiControllerBase
     private readonly GetEnrollmentByIdHandler _getById;
     private readonly GetMyEnrollmentsHandler _getMine;
     private readonly CheckAccessHandler _checkAccess;
+    private readonly ChangePaymentPlanHandler _changePaymentPlan;
     private readonly IAuditLog _audit;
 
     public EnrollmentsController(
@@ -41,6 +43,7 @@ public class EnrollmentsController : ApiControllerBase
         GetEnrollmentByIdHandler getById,
         GetMyEnrollmentsHandler getMine,
         CheckAccessHandler checkAccess,
+        ChangePaymentPlanHandler changePaymentPlan,
         IAuditLog audit)
     {
         _createIndividual = createIndividual;
@@ -52,6 +55,7 @@ public class EnrollmentsController : ApiControllerBase
         _getById = getById;
         _getMine = getMine;
         _checkAccess = checkAccess;
+        _changePaymentPlan = changePaymentPlan;
         _audit = audit;
     }
 
@@ -62,7 +66,7 @@ public class EnrollmentsController : ApiControllerBase
     public async Task<IActionResult> CreateIndividual(CreateIndividualEnrollmentRequest request)
     {
         var result = await _createIndividual.Handle(
-            new CreateIndividualEnrollmentCommand(CurrentUserId, request.CourseId, request.ProfessorId));
+            new CreateIndividualEnrollmentCommand(CurrentUserId, request.CourseId, request.ProfessorId, request.PaymentPlan));
         return CreatedEnrollment(new EnrollmentCreatedResponse(result.EnrollmentId, result.GroupId));
     }
 
@@ -75,7 +79,7 @@ public class EnrollmentsController : ApiControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> JoinGroup(JoinGroupRequest request)
     {
-        var result = await _joinGroup.Handle(new JoinGroupCommand(CurrentUserId, request.GroupId));
+        var result = await _joinGroup.Handle(new JoinGroupCommand(CurrentUserId, request.GroupId, PaymentPlan: request.PaymentPlan));
         return CreatedEnrollment(new EnrollmentCreatedResponse(result.EnrollmentId, result.GroupId));
     }
 
@@ -88,7 +92,7 @@ public class EnrollmentsController : ApiControllerBase
     public async Task<IActionResult> InvitePartner(InvitePartnerRequest request)
     {
         var result = await _invitePartner.Handle(
-            new InvitePartnerCommand(CurrentUserId, request.InviteeUserId, request.CourseId));
+            new InvitePartnerCommand(CurrentUserId, request.InviteeUserId, request.CourseId, request.PaymentPlan));
         return CreatedAtAction(nameof(GetById), new { enrollmentId = result.EnrollmentId },
             new InvitationCreatedResponse(result.EnrollmentId, result.InvitationId));
     }
@@ -135,6 +139,22 @@ public class EnrollmentsController : ApiControllerBase
     {
         await _cancel.Handle(new CancelEnrollmentCommand(enrollmentId, CurrentUserId, IsStaff));
         await _audit.RecordAsync(CurrentUserId, "CancelEnrollment", "Enrollment", enrollmentId, $"byStaff={IsStaff}");
+        return NoContent();
+    }
+
+    // Izbor placanja (odjednom / rate) dok grupa nije potvrdjena; posle toga se menja u Payments-u.
+    [HttpPut("{enrollmentId:guid}/payment-plan")]
+    [ErrorCode(ErrorCodes.CannotChangePaymentPlan)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ChangePaymentPlan(
+        Guid enrollmentId, ChangePaymentPlanRequest request, CancellationToken cancellationToken)
+    {
+        await _changePaymentPlan.Handle(
+            new ChangePaymentPlanCommand(enrollmentId, CurrentUserId, IsStaff, request.PaymentPlan), cancellationToken);
+        await _audit.RecordAsync(CurrentUserId, "ChangePaymentPlan", "Enrollment", enrollmentId,
+            $"plan={request.PaymentPlan}, byStaff={IsStaff}");
         return NoContent();
     }
 

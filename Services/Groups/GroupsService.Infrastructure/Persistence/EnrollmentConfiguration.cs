@@ -22,6 +22,12 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
             .HasMaxLength(20)
             .IsRequired();
 
+        builder.Property(e => e.PaymentPlan)
+            .HasColumnName("payment_plan")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(e => e.Status)
             .HasColumnName("status")
             .HasConversion<string>()

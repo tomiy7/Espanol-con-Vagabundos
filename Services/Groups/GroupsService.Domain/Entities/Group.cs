@@ -120,7 +120,7 @@ public class Group : AggregateRoot
     public bool FormationWindowExpired =>
         FormationWindowEndsAt.HasValue && DateTime.UtcNow > FormationWindowEndsAt.Value;
 
-    public void AddMember(Guid enrollmentId, Guid userId)
+    public void AddMember(Guid enrollmentId, Guid userId, PaymentPlan paymentPlan = PaymentPlan.Full)
     {
         if (Status is not (GroupStatus.Forming or GroupStatus.Ready))
             throw new GroupsDomainException($"Cannot join group in status {Status}.");
@@ -133,7 +133,7 @@ public class Group : AggregateRoot
 
         // Race condition (dva paralelna Join-a) resava Version concurrency token.
 
-        _members.Add(new GroupMember(enrollmentId, userId, DateTime.UtcNow));
+        _members.Add(new GroupMember(enrollmentId, userId, DateTime.UtcNow, paymentPlan));
         Version++;
         AddDomainEvent(new GroupMemberJoined(Id, enrollmentId));
 
@@ -174,6 +174,19 @@ public class Group : AggregateRoot
             : new FirstLessonScheduled(Id));
 
         ConfirmIfPossible(now);
+    }
+
+    // Izbor placanja clana sme da se menja samo dok grupa nije potvrdjena - posle toga
+    // Payments vec ima uplatnice i on odlucuje (da li je nesto placeno).
+    public void ChangeMemberPaymentPlan(Guid enrollmentId, PaymentPlan paymentPlan)
+    {
+        if (ConfirmedAt.HasValue)
+            throw new GroupsDomainException("The group is already confirmed; change the payment plan in Payments.");
+
+        var member = _members.FirstOrDefault(m => m.EnrollmentId == enrollmentId)
+            ?? throw new GroupsDomainException("Enrollment is not a member of this group.");
+
+        member.ChangePaymentPlan(paymentPlan);
     }
 
     private void ConfirmIfPossible(DateTime now)
@@ -267,6 +280,16 @@ public class Group : AggregateRoot
         Status = GroupStatus.Active;
         StartedAt = startedAt;
         UnlockStartsAt = unlockStartsAt ?? startedAt;
+
+        // Grupa pokrenuta bez potvrde (bez planiranog datuma, ili pokrenuta ispod minimuma)
+        // potvrdjuje se ovde, sa startom kao prvim casom - da bi i njeni clanovi dobili uplatnice.
+        if (!ConfirmedAt.HasValue)
+        {
+            PlannedStartAt ??= startedAt;
+            ConfirmedAt = startedAt;
+            AddDomainEvent(new GroupConfirmed(Id));
+        }
+
         AddDomainEvent(new GroupStarted(Id, CourseId));
     }
 

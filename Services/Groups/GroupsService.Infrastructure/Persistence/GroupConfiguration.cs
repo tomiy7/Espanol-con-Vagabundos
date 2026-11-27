@@ -50,6 +50,8 @@ public class GroupConfiguration : IEntityTypeConfiguration<Group>
 
             m.Property(x => x.EnrollmentId).HasColumnName("enrollment_id").IsRequired();
             m.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
+            m.Property(x => x.PaymentPlan).HasColumnName("payment_plan")
+                .HasConversion<string>().HasMaxLength(20).IsRequired();
             m.Property(x => x.JoinedAt).HasColumnName("joined_at").IsRequired();
 
             // Indeks se zadaje po imenu SVOJSTVA (EnrollmentId), ne po imenu kolone;

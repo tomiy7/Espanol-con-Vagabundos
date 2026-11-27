@@ -15,6 +15,7 @@ public record MyEnrollmentDto(
     string? CourseName, // null kad Courses nije dostupan - front prikazuje svoj tekst
     EnrollmentType Type,
     EnrollmentStatus Status,
+    PaymentPlan PaymentPlan,
     Guid? GroupId,
     DateTime CreatedAt,
     DateTime? ActivatedAt,

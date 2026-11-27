@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 using GroupsService.Integration.Tests.Infrastructure;
 using Messaging.RabbitMq;
@@ -54,7 +54,8 @@ public class OutboxFailureTests : ApiTestBase
 
                 await Eventually(() => Outbox(down).Any(m => m.Attempts > 0), "the dispatcher has tried to send", 20);
                 var pending = Outbox(down);
-                Assert.Equal(new[] { "GroupBecameReady", "GroupStarted" }, pending.Where(m => m.Type.StartsWith("Group")).Select(m => m.Type));
+                Assert.Equal(new[] { "GroupBecameReady", "GroupConfirmed", "GroupStarted" },
+                    pending.Where(m => m.Type.StartsWith("Group")).Select(m => m.Type));
                 Assert.All(pending, m => Assert.False(m.Processed));
                 Assert.False(string.IsNullOrWhiteSpace(pending[0].LastError));
 
@@ -65,20 +66,21 @@ public class OutboxFailureTests : ApiTestBase
             // 2) Broker ponovo radi (novi proces sa ispravnom adresom, ista baza): zaostale
             //    poruke odlaze, redom kojim su nastale.
             await using var bus = await TestBus.ConnectAsync(Exchange);
-            var queue = await bus.ListenAsync("GroupBecameReady", "GroupStarted");
+            var queue = await bus.ListenAsync("GroupBecameReady", "GroupConfirmed", "GroupStarted");
             await using var up = Api(connectionString, port: null);
             _ = up.Server;
 
             await Eventually(() => Outbox(up).All(m => m.Processed), "the backlog is sent");
             var received = new List<JsonElement>();
-            for (var i = 0; i < 2; i++)
+            for (var i = 0; i < 3; i++)
             {
                 var message = await bus.ReceiveAsync(queue, TimeSpan.FromSeconds(5));
                 Assert.NotNull(message);
                 using var envelope = JsonDocument.Parse(message);
                 received.Add(envelope.RootElement.Clone());
             }
-            Assert.Equal(new[] { "GroupBecameReady", "GroupStarted" }, received.Select(m => m.GetProperty("eventType").GetString()));
+            Assert.Equal(new[] { "GroupBecameReady", "GroupConfirmed", "GroupStarted" },
+                received.Select(m => m.GetProperty("eventType").GetString()));
             Assert.All(received, m => Assert.Equal(groupId, m.GetProperty("data").GetProperty("groupId").GetGuid()));
         }
         finally

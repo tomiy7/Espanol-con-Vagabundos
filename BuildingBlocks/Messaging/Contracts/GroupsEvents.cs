@@ -1,4 +1,4 @@
-namespace Messaging.Contracts;
+﻿namespace Messaging.Contracts;
 
 // Dogadjaji koje objavljuje Groups (preko outbox-a, pa se ne gube i ne objavljuju se za
 // promenu koja nije snimljena). Nose dovoljno podataka da potrosac (Payments,
@@ -6,7 +6,11 @@ namespace Messaging.Contracts;
 // Ugovori se menjaju samo dodavanjem polja - postojeci potrosaci moraju da rade i dalje.
 
 // Clan grupe: upis i korisnik (kome se salje mejl, ko placa).
-public sealed record GroupMemberInfo(Guid EnrollmentId, Guid UserId);
+// PaymentPlan: "Full" ili "Installments" - izbor placanja sa upisa (za Payments).
+public sealed record GroupMemberInfo(Guid EnrollmentId, Guid UserId)
+{
+    public string PaymentPlan { get; init; } = "Full";
+}
 
 // Termin u nedelji (npr. Monday 18:00).
 public sealed record GroupSlotInfo(DayOfWeek DayOfWeek, TimeOnly Time);

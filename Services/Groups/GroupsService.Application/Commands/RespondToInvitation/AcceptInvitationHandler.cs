@@ -44,12 +44,13 @@ public class AcceptInvitationHandler
             throw EnrollmentGuard.Blocked(inviteeExisting);
 
         var inviteeEnrollment = Enrollment.CreateSearching(
-            invitation.InviteeUserId, inviterEnrollment.CourseId, EnrollmentType.Pair);
+            invitation.InviteeUserId, inviterEnrollment.CourseId, EnrollmentType.Pair,
+            command.PaymentPlan ?? PaymentPlan.Full);
 
         var group = Group.CreatePair(inviterEnrollment.CourseId);
 
-        group.AddMember(inviterEnrollment.Id, inviterEnrollment.UserId);
-        group.AddMember(inviteeEnrollment.Id, inviteeEnrollment.UserId);
+        group.AddMember(inviterEnrollment.Id, inviterEnrollment.UserId, inviterEnrollment.PaymentPlan);
+        group.AddMember(inviteeEnrollment.Id, inviteeEnrollment.UserId, inviteeEnrollment.PaymentPlan);
 
         inviterEnrollment.AssignToGroup(group.Id);
         inviteeEnrollment.AssignToGroup(group.Id);
