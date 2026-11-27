@@ -3,7 +3,7 @@
 > Živi dokument: šta je urađeno i šta je ostalo. Kad se stavka završi ili se pojavi nova,
 > menjati ovde. Arhitekturalne odluke su u [ARCHITECTURE.md](ARCHITECTURE.md).
 
-Poslednja izmena: 2026-11-25
+Poslednja izmena: 2026-11-27
 
 ---
 
@@ -27,11 +27,22 @@ Poslednja izmena: 2026-11-25
 1. **Groups: planirani datum prvog časa** — `PUT /groups/{id}/planned-start`, događaji `GroupConfirmed`,
    `MemberJoinedConfirmedGroup`, `FirstLessonRescheduled` (+ mejl). Dizajn:
    [specs/2026-11-25-groups-first-lesson-date-design.md](superpowers/specs/2026-11-25-groups-first-lesson-date-design.md).
-2. **Courses dorada** — tri cene po kursu (individualno, par, grupa), slojevi, testovi, CI, Dockerfile, `/health`.
+2. **Courses dorada** — tri cene po osobi (polja u Directus-u), `GET /courses/{id}/pricing`, zaštićene lekcije
+   (pristup iz Groups-a), ProblemDetails, `/health`, testovi, CI. Directus ostaje (Courses samo čita).
+   Dizajn: [specs/2026-11-27-courses-hardening-design.md](superpowers/specs/2026-11-27-courses-hardening-design.md).
+   Za front: [FRONTEND-INTEGRATION.md](FRONTEND-INTEGRATION.md).
 3. **Payments prerada** — uplatnica iz događaja (iznos sa servera, zaključan pri izdavanju), cela suma ili dve rate,
    rokovi od datuma prvog časa (pomeraju se za neplaćene), blaga strogost (zakasnela = oznaka za osoblje),
    PDF na zahtev u izgledu Naloga za uplatu (Obrazac 1) + NBS IPS QR, testovi, CI, compose.
    Pravila su podešavanja, ne konstante u kodu.
+   Akcije/popusti (po datumima) i kasnije paketi u Payments-u; unose ih profesor i admin.
+4. **Profesori ≈ admin u Groups-u** — ručno zatvaranje grupe, izmena dodeljenog termina i audit log i za profesore (dogovoreno 2026-11-27).
+5. **Courses: progres** (`/progress/...` iz front ugovora) i `CourseCompleted` — prvo dogovor šta je „završen kurs“.
+6. **Pristup posle završetka kursa** (Groups) — završen upis i dalje vidi materijal određeni period
+   (podešavanje, npr. N dana od `CompletedAt`); `/enrollments/access` vraća i `accessUntil`, a front prikazuje
+   „Sadržaj kursa možete da vidite do ...“. Istorija upisa (aktivni, zamrznuti, završeni) ostaje u `GET /enrollments/mine`.
+   **Otvoreno:** da li zamrznut učenik vidi sadržaj.
+7. **Prikaz cena u drugim valutama** — srednji kurs NBS, samo informativno (plaća se u RSD).
 
 ### 2. Bezbednosna runda
 - **Service-to-service autentikacija.** Notifications i Groups sada čitaju korisnike iz Auth-a statičkim
