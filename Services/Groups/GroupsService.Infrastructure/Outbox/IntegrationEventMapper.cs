@@ -1,4 +1,4 @@
-using GroupsService.Domain;
+﻿using GroupsService.Domain;
 using GroupsService.Domain.Entities;
 using Messaging;
 using Contracts = Messaging.Contracts;
@@ -43,6 +43,16 @@ public static class IntegrationEventMapper
         {
             Members = Members(g)
         },
+
+        (Group g, DomainEvents.GroupConfirmed) => new Contracts.GroupConfirmed(
+            g.Id, g.CourseId, g.Type.ToString(), g.PlannedStartAt!.Value, Members(g)),
+
+        (Group g, DomainEvents.MemberJoinedConfirmedGroup e) => new Contracts.MemberJoinedConfirmedGroup(
+            g.Id, g.CourseId, g.Type.ToString(), g.PlannedStartAt!.Value,
+            new Contracts.GroupMemberInfo(e.EnrollmentId, e.UserId)),
+
+        (Group g, DomainEvents.FirstLessonRescheduled e) => new Contracts.FirstLessonRescheduled(
+            g.Id, g.CourseId, e.OldAt, e.NewAt, Members(g)),
 
         // ---------- upis ----------
         (Enrollment e, DomainEvents.EnrollmentCreated) => new Contracts.EnrollmentCreated(

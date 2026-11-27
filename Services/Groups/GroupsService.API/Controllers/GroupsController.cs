@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GroupsService.API.Constants;
 using GroupsService.API.DTOs;
@@ -7,6 +7,7 @@ using GroupsService.Application.Commands.AssignProfessorToSlot;
 using GroupsService.Application.Commands.CompleteGroup;
 using GroupsService.Application.Commands.CreateGroup;
 using GroupsService.Application.Commands.JoinGroup;
+using GroupsService.Application.Commands.SchedulePlannedStart;
 using GroupsService.Application.Commands.StartGroup;
 using GroupsService.Application.Interfaces;
 using GroupsService.Application.Queries.GetAvailableGroups;
@@ -29,6 +30,7 @@ public class GroupsController : ApiControllerBase
     private readonly AssignProfessorToSlotHandler _assignProfessor;
     private readonly StartGroupHandler _startGroup;
     private readonly CompleteGroupHandler _completeGroup;
+    private readonly SchedulePlannedStartHandler _schedulePlannedStart;
     private readonly IAuditLog _audit;
 
     public GroupsController(
@@ -40,6 +42,7 @@ public class GroupsController : ApiControllerBase
         AssignProfessorToSlotHandler assignProfessor,
         StartGroupHandler startGroup,
         CompleteGroupHandler completeGroup,
+        SchedulePlannedStartHandler schedulePlannedStart,
         IAuditLog audit)
     {
         _getAvailable = getAvailable;
@@ -50,6 +53,7 @@ public class GroupsController : ApiControllerBase
         _assignProfessor = assignProfessor;
         _startGroup = startGroup;
         _completeGroup = completeGroup;
+        _schedulePlannedStart = schedulePlannedStart;
         _audit = audit;
     }
 
@@ -139,6 +143,25 @@ public class GroupsController : ApiControllerBase
 
         await _audit.RecordAsync(CurrentUserId, "AssignSlot", "Group", groupId,
             $"slot={request.SlotIndex}, {request.DayOfWeek} {request.Time}, professor={request.ProfessorId}");
+        return NoContent();
+    }
+
+    // Planirani datum prvog casa (postavljanje ili pomeranje), samo pre starta grupe.
+    // Kad grupa ima i dovoljno clanova i datum, postaje potvrdjena i izdaju se uplatnice.
+    [HttpPut("{groupId:guid}/planned-start")]
+    [Authorize(Roles = Roles.Staff)]
+    [ErrorCode(ErrorCodes.CannotSchedule)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SchedulePlannedStart(
+        Guid groupId, SchedulePlannedStartRequest request, CancellationToken cancellationToken)
+    {
+        await _schedulePlannedStart.Handle(
+            new SchedulePlannedStartCommand(groupId, request.PlannedStartAt), cancellationToken);
+
+        await _audit.RecordAsync(CurrentUserId, "SchedulePlannedStart", "Group", groupId,
+            $"plannedStartAt={request.PlannedStartAt:O}");
         return NoContent();
     }
 

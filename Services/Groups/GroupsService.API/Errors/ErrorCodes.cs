@@ -1,4 +1,4 @@
-namespace GroupsService.API.Errors;
+﻿namespace GroupsService.API.Errors;
 
 // Stabilni kodovi gresaka koje front mapira na svoje poruke. Tekst ("detail") je samo
 // pomoc za developera i moze da se menja; kod se ne menja bez dogovora sa frontom.
@@ -27,6 +27,7 @@ public static class ErrorCodes
     public const string CannotAssign = "CANNOT_ASSIGN";
     public const string CannotStart = "CANNOT_START";
     public const string CannotComplete = "CANNOT_COMPLETE";
+    public const string CannotSchedule = "CANNOT_SCHEDULE";
 
     // pozivnice
     public const string CannotAcceptInvitation = "CANNOT_ACCEPT_INVITATION";

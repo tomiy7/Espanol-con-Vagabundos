@@ -18,6 +18,7 @@ public class Group : AggregateRoot
     // Granice protiv besmislenih vrednosti (greska u unosu ili namerna zloupotreba).
     public const int MaxFormationWindowDays = 90;
     public static readonly TimeSpan MaxUnlockOffset = TimeSpan.FromDays(365);
+    public static readonly TimeSpan MaxPlannedStartOffset = TimeSpan.FromDays(365);
 
     public Guid CourseId { get; private set; }
     public GroupType Type { get; private set; }
@@ -32,6 +33,13 @@ public class Group : AggregateRoot
     // Od kog trenutka se broje nedelje za otvaranje lekcija. Po defaultu je to start
     // grupe, a profesor/admin ga pri Start moze postaviti na kasniji datum.
     public DateTime? UnlockStartsAt { get; private set; }
+
+    // Planirani datum i vreme prvog casa (UTC). Postavlja ga profesor/admin pre starta.
+    public DateTime? PlannedStartAt { get; private set; }
+
+    // Kada je grupa prvi put imala i dovoljno clanova i datum prvog casa. Postavlja se
+    // jednom i ne brise se, i kad grupa kasnije padne ispod minimuma (uplatnice ostaju).
+    public DateTime? ConfirmedAt { get; private set; }
 
     // Konkurentnost: raste pri svakoj promeni clanova. EF ga koristi kao concurrency
     // token, pa dva paralelna upisa na zadnje mesto ne mogu oba da prodju - drugi
@@ -129,11 +137,50 @@ public class Group : AggregateRoot
         Version++;
         AddDomainEvent(new GroupMemberJoined(Id, enrollmentId));
 
+        if (ConfirmedAt.HasValue)
+            AddDomainEvent(new MemberJoinedConfirmedGroup(Id, enrollmentId, userId));
+
         if (Status == GroupStatus.Forming && _members.Count >= MinSize)
         {
             Status = GroupStatus.Ready;
             AddDomainEvent(new GroupBecameReady(Id));
         }
+
+        ConfirmIfPossible(DateTime.UtcNow);
+    }
+
+    // Postavljanje ili pomeranje planiranog datuma prvog casa, dok grupa nije pocela.
+    // Isti datum ponovo ne menja nista (ni dogadjaj ni mejl).
+    public void SchedulePlannedStart(DateTime at, DateTime now)
+    {
+        if (Status is not (GroupStatus.Forming or GroupStatus.Ready))
+            throw new GroupsDomainException($"First lesson date can only be set before the group starts (status: {Status}).");
+
+        if (at <= now)
+            throw new GroupsDomainException("First lesson date must be in the future.");
+
+        if (at > now + MaxPlannedStartOffset)
+            throw new GroupsDomainException("First lesson date cannot be more than a year ahead.");
+
+        if (PlannedStartAt == at)
+            return;
+
+        var old = PlannedStartAt;
+        PlannedStartAt = at;
+        AddDomainEvent(old.HasValue
+            ? new FirstLessonRescheduled(Id, old.Value, at)
+            : new FirstLessonScheduled(Id));
+
+        ConfirmIfPossible(now);
+    }
+
+    private void ConfirmIfPossible(DateTime now)
+    {
+        if (ConfirmedAt.HasValue || Status != GroupStatus.Ready || !PlannedStartAt.HasValue)
+            return;
+
+        ConfirmedAt = now;
+        AddDomainEvent(new GroupConfirmed(Id));
     }
 
     // Poziva CancelEnrollmentHandler kad clan otkaze upis - bez ovoga Group._members

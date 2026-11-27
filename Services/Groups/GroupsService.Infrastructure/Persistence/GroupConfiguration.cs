@@ -31,6 +31,8 @@ public class GroupConfiguration : IEntityTypeConfiguration<Group>
         builder.Property(g => g.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(g => g.StartedAt).HasColumnName("started_at");
         builder.Property(g => g.UnlockStartsAt).HasColumnName("unlock_starts_at");
+        builder.Property(g => g.PlannedStartAt).HasColumnName("planned_start_at");
+        builder.Property(g => g.ConfirmedAt).HasColumnName("confirmed_at");
 
         // Optimisticka konkurentnost za zadnje mesto u grupi (vidi Group.Version).
         builder.Property(g => g.Version).HasColumnName("version").IsConcurrencyToken();
