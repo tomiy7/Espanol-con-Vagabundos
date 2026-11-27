@@ -1,5 +1,6 @@
 ﻿using GroupsService.Application.Interfaces;
 using GroupsService.Application.Options;
+using GroupsService.Domain.Enums;
 using Microsoft.Extensions.Options;
 
 namespace GroupsService.Application.Queries.CheckAccess;
@@ -29,18 +30,25 @@ public class CheckAccessHandler
         // napredak i stavlja ga u CourseCompleted event.
         var enrollments = await _repository.GetByUserIdAsync(query.UserId);
 
-        var granting = enrollments.FirstOrDefault(e => e.CourseId == query.CourseId && e.GrantsAccess());
+        // Aktivan upis ima prednost nad zavrsenim (npr. ucenik ponovo slusa isti kurs).
+        var now = DateTime.UtcNow;
+        var granting = enrollments
+            .Where(e => e.CourseId == query.CourseId && e.GrantsAccess(now, _options.CompletedAccessDays))
+            .OrderBy(e => e.Status == EnrollmentStatus.Active ? 0 : 1)
+            .FirstOrDefault();
         if (granting is null)
             return new CheckAccessResult(false);
 
+        // Zavrsen kurs: otkljucano je ono sto je bilo otkljucano u trenutku zavrsetka
+        // (zavrsni test se otvara tek posle svih lekcija, pa je to ceo kurs).
         var unlocked = 0;
         if (granting.GroupId.HasValue)
         {
             var group = await _groupRepository.GetByIdAsync(granting.GroupId.Value);
             if (group?.UnlockStartsAt is { } unlockStartsAt)
-                unlocked = granting.UnlockedLessons(unlockStartsAt, _options.LessonsPerWeek);
+                unlocked = granting.UnlockedLessons(unlockStartsAt, _options.LessonsPerWeek, granting.CompletedAt ?? now);
         }
 
-        return new CheckAccessResult(true, granting.Id, unlocked);
+        return new CheckAccessResult(true, granting.Id, unlocked, granting.AccessUntil(_options.CompletedAccessDays));
     }
 }

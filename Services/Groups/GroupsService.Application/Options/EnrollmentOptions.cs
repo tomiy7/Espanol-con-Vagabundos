@@ -15,6 +15,10 @@ public class EnrollmentOptions
     // ili otkazati). Pozadinski posao koji ovo proverava je planiran.
     public int MaxFreezeDays { get; set; } = 30;
 
+    // Koliko dana posle zavrsetka kursa ucenik i dalje vidi materijal (front prikazuje
+    // "Sadrzaj kursa mozete da vidite do ..."). 0 = pristup prestaje odmah.
+    public int CompletedAccessDays { get; set; } = 30;
+
     // Bazni URL fronta na koji se lepe /invitations/{token}/accept|decline linkovi
     // u mejlu. Ako frontend hoce svoju landing stranicu koja tek onda zove API,
     // ovde ide frontend URL umesto direktnog API URL-a - vidi SETUP.md.

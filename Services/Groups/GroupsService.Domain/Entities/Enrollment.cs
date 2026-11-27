@@ -246,6 +246,15 @@ public class Enrollment : AggregateRoot
 
     // Pristup kursu: svi tipovi (uklj. Individual) tek kad njihova Group predje u
     // Active, tj. profesor potvrdi termin i grupa se pokrene (Enrollment.Status
-    // postaje Active tad). Zamrznut/zavrsen/otkazan upis nema pristup.
-    public bool GrantsAccess() => Status == EnrollmentStatus.Active;
+    // postaje Active tad). Zavrsen upis ima pristup jos completedAccessDays dana posle
+    // zavrsetka. Zamrznut i otkazan upis nemaju pristup (za zamrznute: otvoreno pitanje).
+    public bool GrantsAccess(DateTime now, int completedAccessDays) =>
+        Status == EnrollmentStatus.Active
+        || (AccessUntil(completedAccessDays) is { } until && now < until);
+
+    // Do kada traje pristup posle zavrsetka (null dok kurs nije zavrsen).
+    public DateTime? AccessUntil(int completedAccessDays) =>
+        Status == EnrollmentStatus.Completed && CompletedAt.HasValue
+            ? CompletedAt.Value.AddDays(completedAccessDays)
+            : null;
 }

@@ -1,4 +1,4 @@
-using GroupsService.Domain.Entities;
+﻿using GroupsService.Domain.Entities;
 using GroupsService.Domain.Enums;
 using GroupsService.Domain.Exceptions;
 
@@ -106,14 +106,14 @@ public class GroupTests
     }
 
     [Fact]
-    public void Reassigning_an_assigned_slot_requires_admin_permission()
+    public void Reassigning_an_assigned_slot_requires_explicit_permission()
     {
         var g = GroupWithSlots(0);
         var other = Guid.NewGuid();
 
         var ex = Assert.Throws<GroupsDomainException>(() =>
             g.AssignProfessorToSlot(0, DayOfWeek.Tuesday, new TimeOnly(9, 0), other));
-        Assert.Contains("Only an admin", ex.Message);
+        Assert.Contains("reassigning is not allowed", ex.Message);
 
         g.AssignProfessorToSlot(0, DayOfWeek.Tuesday, new TimeOnly(9, 0), other, allowReassign: true);
         Assert.Equal(other, g.Slots.First(s => s.SlotIndex == 0).ProfessorId);

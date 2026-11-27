@@ -36,7 +36,7 @@ public class AssignProfessorToSlotHandler
                 $"Professor already has a conflicting slot on {command.DayOfWeek} at {command.Time} in another group.");
 
         group.AssignProfessorToSlot(
-            command.SlotIndex, command.DayOfWeek, command.Time, command.ProfessorId, allowReassign: command.IsAdmin);
+            command.SlotIndex, command.DayOfWeek, command.Time, command.ProfessorId, allowReassign: command.AllowReassign);
         await _groupRepository.SaveChangesAsync();
         await scheduleLock.CommitAsync();
         

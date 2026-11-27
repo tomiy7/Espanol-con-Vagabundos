@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using GroupsService.Integration.Tests.Infrastructure;
@@ -70,20 +70,21 @@ public class AuthorizationTests : ApiTestBase
     }
 
     [IntegrationFact]
-    public async Task Admin_only_actions_reject_professors_but_allow_admins()
+    public async Task Former_admin_only_actions_are_open_to_professors_and_admins()
     {
+        // Profesori imaju ista prava kao admin (dogovor 2026-11-27): zatvaranje grupe i audit log.
         var professor = TestUser.Professor();
         var admin = TestUser.Admin();
         var groupId = await CreateGroup(professor);
 
-        await AssertStatus(HttpStatusCode.Forbidden, await Post(professor, $"/groups/{groupId}/complete"));
-        await AssertStatus(HttpStatusCode.Forbidden, await Get(professor, "/audit"));
-
-        // admin prolazi autorizaciju (grupa nije Active, pa je odgovor poslovna greska 400, ne 403)
-        var complete = await Post(admin, $"/groups/{groupId}/complete");
-        await AssertStatus(HttpStatusCode.BadRequest, complete);
-        Assert.Equal("CANNOT_COMPLETE", await ErrorCode(complete));
-        await AssertStatus(HttpStatusCode.OK, await Get(admin, "/audit"));
+        foreach (var staff in new[] { professor, admin })
+        {
+            // prolazi autorizaciju (grupa nije Active, pa je odgovor poslovna greska 400, ne 403)
+            var complete = await Post(staff, $"/groups/{groupId}/complete");
+            await AssertStatus(HttpStatusCode.BadRequest, complete);
+            Assert.Equal("CANNOT_COMPLETE", await ErrorCode(complete));
+            await AssertStatus(HttpStatusCode.OK, await Get(staff, "/audit"));
+        }
     }
 
     [IntegrationFact]
