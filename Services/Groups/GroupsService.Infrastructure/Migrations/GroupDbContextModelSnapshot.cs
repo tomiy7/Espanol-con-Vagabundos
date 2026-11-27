@@ -57,6 +57,12 @@ namespace GroupsService.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("group_id");
 
+                    b.Property<string>("PaymentPlan")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("payment_plan");
+
                     b.Property<Guid?>("ProfessorId")
                         .HasColumnType("uuid")
                         .HasColumnName("professor_id");
@@ -331,6 +337,12 @@ namespace GroupsService.Infrastructure.Migrations
                             b1.Property<DateTime>("JoinedAt")
                                 .HasColumnType("timestamp with time zone")
                                 .HasColumnName("joined_at");
+
+                            b1.Property<string>("PaymentPlan")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("payment_plan");
 
                             b1.Property<Guid>("UserId")
                                 .HasColumnType("uuid")

@@ -31,6 +31,7 @@ public class GetMyEnrollmentsHandler
                 CourseName: courseName,
                 Type: enrollment.Type,
                 Status: enrollment.Status,
+                PaymentPlan: enrollment.PaymentPlan,
                 GroupId: enrollment.GroupId,
                 CreatedAt: enrollment.CreatedAt,
                 ActivatedAt: enrollment.ActivatedAt,

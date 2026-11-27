@@ -1,4 +1,5 @@
-﻿using GroupsService.Domain.Exceptions;
+﻿using GroupsService.Domain.Enums;
+using GroupsService.Domain.Exceptions;
 
 namespace GroupsService.Domain.ValueObjects;
 
@@ -13,9 +14,12 @@ public class GroupMember : Entity
     public Guid UserId { get; private set; }
     public DateTime JoinedAt { get; private set; }
 
+    // Kopija izbora placanja sa upisa (za dogadjaje grupe koje cita Payments).
+    public PaymentPlan PaymentPlan { get; private set; } = PaymentPlan.Full;
+
     private GroupMember() { }
 
-    public GroupMember(Guid enrollmentId, Guid userId, DateTime joinedAt)
+    public GroupMember(Guid enrollmentId, Guid userId, DateTime joinedAt, PaymentPlan paymentPlan = PaymentPlan.Full)
     {
         if (enrollmentId == Guid.Empty)
             throw new GroupsDomainException("Enrollment ID cannot be empty.");
@@ -27,5 +31,8 @@ public class GroupMember : Entity
         EnrollmentId = enrollmentId;
         UserId = userId;
         JoinedAt = joinedAt;
+        PaymentPlan = paymentPlan;
     }
+
+    internal void ChangePaymentPlan(PaymentPlan paymentPlan) => PaymentPlan = paymentPlan;
 }

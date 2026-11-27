@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using GroupsService.Application.Interfaces;
 using GroupsService.Integration.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -82,6 +82,7 @@ public class UnexpectedErrorTests : ApiTestBase
 
         // Kad baza opet prima upise, ista operacija prolazi (nista nije ostalo "zaglavljeno").
         await AssertStatus(HttpStatusCode.NoContent, await Post(professor, $"/groups/{groupId}/start"));
-        Assert.Equal(eventsBefore + 1, Factory.WithDb(db => db.OutboxMessages.Count()));
+        // GroupConfirmed (start bez planiranog datuma potvrdjuje grupu) + GroupStarted
+        Assert.Equal(eventsBefore + 2, Factory.WithDb(db => db.OutboxMessages.Count()));
     }
 }

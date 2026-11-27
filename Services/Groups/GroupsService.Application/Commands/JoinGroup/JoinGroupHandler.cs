@@ -1,4 +1,4 @@
-using GroupsService.Application.Interfaces;
+﻿using GroupsService.Application.Interfaces;
 using GroupsService.Domain.Entities;
 using GroupsService.Domain.Enums;
 using GroupsService.Domain.Exceptions;
@@ -41,10 +41,11 @@ public class JoinGroupHandler
         if (existing is not null)
             throw EnrollmentGuard.Blocked(existing, self: !command.AddedByStaff);
 
-        var enrollment = Enrollment.CreateSearching(command.UserId, group.CourseId, EnrollmentType.Group);
+        var enrollment = Enrollment.CreateSearching(
+            command.UserId, group.CourseId, EnrollmentType.Group, command.PaymentPlan ?? PaymentPlan.Full);
 
         var wasReadyBefore = group.Status == GroupStatus.Ready;
-        group.AddMember(enrollment.Id, enrollment.UserId); // baca ako je grupa puna ili nije otvorena
+        group.AddMember(enrollment.Id, enrollment.UserId, enrollment.PaymentPlan); // baca ako je grupa puna ili nije otvorena
         enrollment.AssignToGroup(group.Id);
 
         // Ulazak u grupu koja je vec Ready znaci da je i novi upis Ready. Kad grupa

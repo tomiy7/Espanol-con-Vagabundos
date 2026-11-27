@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
 using GroupsService.Integration.Tests.Infrastructure;
@@ -29,7 +29,8 @@ public class MessagingTests : ApiTestBase
         var outbox = Outbox();
         Assert.Equal(3, outbox.Count(m => m.Type == "EnrollmentCreated"));
         var lifecycle = outbox.Where(m => m.Type != "EnrollmentCreated").ToList();
-        Assert.Equal(new[] { "GroupBecameReady", "GroupStarted", "EnrollmentCancelled" }, lifecycle.Select(m => m.Type));
+        Assert.Equal(new[] { "GroupBecameReady", "GroupConfirmed", "GroupStarted", "EnrollmentCancelled" },
+            lifecycle.Select(m => m.Type));
 
         var ready = lifecycle[0].Payload;
         Assert.Equal(groupId, ready.GetProperty("groupId").GetGuid());
@@ -37,9 +38,9 @@ public class MessagingTests : ApiTestBase
         Assert.Equal("Group", ready.GetProperty("groupType").GetString());
         Assert.Equal(ids.OrderBy(x => x), ready.GetProperty("memberEnrollmentIds").EnumerateArray().Select(x => x.GetGuid()).OrderBy(x => x));
 
-        var cancelled = lifecycle[2].Payload;
+        var cancelled = lifecycle[3].Payload;
         Assert.Equal(ids[0], cancelled.GetProperty("enrollmentId").GetGuid());
-        Assert.Equal(lifecycle[2].Id, cancelled.GetProperty("eventId").GetGuid());
+        Assert.Equal(lifecycle[3].Id, cancelled.GetProperty("eventId").GetGuid());
     }
 
     [IntegrationFact]

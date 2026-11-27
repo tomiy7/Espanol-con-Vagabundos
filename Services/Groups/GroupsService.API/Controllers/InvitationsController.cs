@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GroupsService.API.DTOs;
 using GroupsService.API.Errors;
@@ -47,9 +47,9 @@ public class InvitationsController : ApiControllerBase
     [ProducesResponseType<InvitationAcceptedResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Accept(string token)
+    public async Task<IActionResult> Accept(string token, [FromBody] AcceptInvitationRequest? request)
     {
-        var result = await _accept.Handle(new AcceptInvitationCommand(token));
+        var result = await _accept.Handle(new AcceptInvitationCommand(token, request?.PaymentPlan));
         return Ok(new InvitationAcceptedResponse(result.InviteeEnrollmentId, result.GroupId));
     }
 

@@ -25,6 +25,10 @@ public class Enrollment : AggregateRoot
     // (dobija privatnu Group sa 1 clanom i 1 slotom, vidi Group.CreateIndividual).
     public Guid? GroupId { get; private set; }
 
+    // Izbor nacina placanja pri upisu (podrazumevano odjednom). Kopira se i na clana grupe
+    // (GroupMember), jer dogadjaji grupe nose clanove sa njihovim izborom za Payments.
+    public PaymentPlan PaymentPlan { get; private set; } = PaymentPlan.Full;
+
     public DateTime CreatedAt { get; private set; }
     public DateTime? ActivatedAt { get; private set; }
     public DateTime? CancelledAt { get; private set; }
@@ -46,9 +50,11 @@ public class Enrollment : AggregateRoot
     // ovde pri kreiranju) mora prvo da potvrdi termin (dan/vreme) kroz isti
     // AssignProfessorToSlot mehanizam koji koriste Pair/Group, pre nego sto
     // Enrollment postane Active. Vidi Group.CreateIndividual.
-    public static Enrollment CreateIndividual(Guid userId, Guid courseId, Guid professorId)
+    public static Enrollment CreateIndividual(
+        Guid userId, Guid courseId, Guid professorId, PaymentPlan paymentPlan = PaymentPlan.Full)
     {
         ValidateCommon(userId, courseId);
+        ValidatePlan(paymentPlan);
 
         if (professorId == Guid.Empty)
             throw new GroupsDomainException("Professor ID is required for individual enrollment.");
@@ -60,6 +66,7 @@ public class Enrollment : AggregateRoot
             CourseId = courseId,
             Type = EnrollmentType.Individual,
             ProfessorId = professorId,
+            PaymentPlan = paymentPlan,
             // Searching ovde ne znaci "trazi partnera/grupu" (nema koga da trazi za
             // Individual) - znaci "ceka da profesor potvrdi termin". Isti status kao
             // Pair/Group iz istog razloga: handler-i (MarkReady/MarkActive) ne treba
@@ -73,9 +80,11 @@ public class Enrollment : AggregateRoot
     }
 
     // Koristi se i za Pair (inicijator, pre prihvatanja partnera) i za Group tip.
-    public static Enrollment CreateSearching(Guid userId, Guid courseId, EnrollmentType type)
+    public static Enrollment CreateSearching(
+        Guid userId, Guid courseId, EnrollmentType type, PaymentPlan paymentPlan = PaymentPlan.Full)
     {
         ValidateCommon(userId, courseId);
+        ValidatePlan(paymentPlan);
 
         if (type == EnrollmentType.Individual)
             throw new GroupsDomainException("Use CreateIndividual for individual enrollments.");
@@ -86,12 +95,31 @@ public class Enrollment : AggregateRoot
             UserId = userId,
             CourseId = courseId,
             Type = type,
+            PaymentPlan = paymentPlan,
             Status = EnrollmentStatus.Searching,
             CreatedAt = DateTime.UtcNow
         };
 
         enrollment.AddDomainEvent(new EnrollmentCreated(enrollment.Id, userId, courseId, type.ToString()));
         return enrollment;
+    }
+
+    // Promena izbora placanja. Da li je jos dozvoljena (grupa nije potvrdjena) proverava
+    // handler preko Group.ChangeMemberPaymentPlan; posle potvrde izbor menja Payments.
+    public void ChangePaymentPlan(PaymentPlan paymentPlan)
+    {
+        ValidatePlan(paymentPlan);
+
+        if (Status is EnrollmentStatus.Cancelled or EnrollmentStatus.Completed)
+            throw new GroupsDomainException($"Payment plan cannot be changed for an enrollment in status {Status}.");
+
+        PaymentPlan = paymentPlan;
+    }
+
+    private static void ValidatePlan(PaymentPlan paymentPlan)
+    {
+        if (!Enum.IsDefined(paymentPlan))
+            throw new GroupsDomainException("Payment plan is not valid.");
     }
 
     private static void ValidateCommon(Guid userId, Guid courseId)

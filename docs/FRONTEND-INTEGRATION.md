@@ -29,10 +29,18 @@
    - individualni časovi: `POST /enrollments/individual` `{ "courseId", "professorId" }` ✅
    - par: `POST /enrollments/invite-partner` `{ "courseId", "inviteeUserId" }`; pozvani dobija mejl sa linkom
      `/invitations/{token}` → `GET /invitations/{token}`, `POST /invitations/{token}/accept|decline` ✅
+
+   **Način plaćanja** se bira pri upisu ✅: svaki od ovih zahteva (i `accept`) prima opciono
+   `"paymentPlan": "Full" | "Installments"` (odjednom / na rate; bez vrednosti = `Full`). Profesor koji dodaje
+   učenika po Google formi upisuje odgovor iz forme.
+   - **Promena pre potvrde grupe:** `PUT /enrollments/{enrollmentId}/payment-plan` `{ "paymentPlan": "Installments" }`
+     (svoj upis ili osoblje) → `204`. Posle potvrde grupe: `400` `CANNOT_CHANGE_PAYMENT_PLAN` — tada se menja
+     u Payments-u (dok ništa nije plaćeno) 🔜3.
 2. **Profesor postavlja datum prvog časa:** `PUT /groups/{groupId}/planned-start` `{ "plannedStartAt": "2026-12-08T17:00:00Z" }` ✅
    (preporuka: slati sa zonom ili u UTC). `GET /groups/{id}` vraća `plannedStartAt` i `confirmedAt`.
 3. **Grupa je potvrđena** (ima dovoljno članova i datum) → Payments izdaje uplatnicu svakom članu,
-   učenik dobija mejl sa linkom. 🔜3
+   učenik dobija mejl sa linkom. 🔜3 Grupa koja se pokrene bez planiranog datuma potvrđuje se pri startu
+   (datum starta = prvi čas), pa i njeni članovi dobijaju uplatnice ✅.
 4. **Učenik plaća** (uplatnica / IPS QR). Vidi svoje uplate: `GET /payments/my`, PDF: `GET /payments/{id}/slip`. 🔜3
 5. **Osoblje potvrđuje uplatu:** `POST /payments/{id}/confirm`. 🔜3 (sada postoji, samo za admina)
 6. **Profesor pokreće grupu:** `POST /groups/{groupId}/start` ✅ → lekcije se otvaraju 3 nedeljno.
@@ -59,6 +67,7 @@ Zamenjuje `GET /courses/my`.
     "courseName": "Španski A1",
     "type": "Group",
     "status": "Active",
+    "paymentPlan": "Full",
     "groupId": "guid",
     "createdAt": "2026-11-20T10:00:00Z",
     "activatedAt": "2026-12-08T17:00:00Z",

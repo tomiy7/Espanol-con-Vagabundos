@@ -1,4 +1,5 @@
-﻿using GroupsService.Application.Interfaces;
+﻿using GroupsService.Domain.Enums;
+using GroupsService.Application.Interfaces;
 using GroupsService.Domain.Entities;
 using GroupsService.Domain.Exceptions;
 
@@ -30,7 +31,8 @@ public class CreateIndividualEnrollmentHandler
 
         // NAPOMENA: ne proveravamo da ProfessorId ima stvarno Professor rolu u Auth-u,
         // niti da CourseId postoji u Courses. API sloj je iza JWT-a; ovo ostaje tech debt.
-        var enrollment = Enrollment.CreateIndividual(command.UserId, command.CourseId, command.ProfessorId);
+        var enrollment = Enrollment.CreateIndividual(
+            command.UserId, command.CourseId, command.ProfessorId, command.PaymentPlan ?? PaymentPlan.Full);
         
         // Individual dobija SVOJU privatnu Group (nema deljenja sa drugima, za razliku
         // od CreateGroupEnrollmentHandler koji prvo trazi otvorenu grupu) - MinSize=
@@ -39,7 +41,7 @@ public class CreateIndividualEnrollmentHandler
         // termin preko AssignProfessorToSlot (isti endpoint kao za Pair/Group), i tek
         // StartGroupHandler (group.Start()) aktivira pristup kursu.
         var group = Group.CreateIndividual(command.CourseId);
-        group.AddMember(enrollment.Id, enrollment.UserId);
+        group.AddMember(enrollment.Id, enrollment.UserId, enrollment.PaymentPlan);
         enrollment.AssignToGroup(group.Id);
         enrollment.MarkReady();
         

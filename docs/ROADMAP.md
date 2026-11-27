@@ -31,7 +31,10 @@ Poslednja izmena: 2026-11-27
    (pristup iz Groups-a), ProblemDetails, `/health`, testovi, CI. Directus ostaje (Courses samo čita).
    Dizajn: [specs/2026-11-27-courses-hardening-design.md](superpowers/specs/2026-11-27-courses-hardening-design.md).
    Za front: [FRONTEND-INTEGRATION.md](FRONTEND-INTEGRATION.md).
-3. **Payments prerada** — uplatnica iz događaja (iznos sa servera, zaključan pri izdavanju), cela suma ili dve rate,
+3. **Payments prerada** — preduslov u Groups-u ✅: izbor plaćanja (`paymentPlan`) pri upisu, promena pre potvrde,
+   `Start` potvrđuje grupu bez planiranog datuma. Payments se radi u delovima: 3a jezgro, 3b uplatnica (Obrazac 1,
+   IPS QR, model 97) i mejlovi, 3c akcije, 3d kurs valuta.
+   Ranije stavke za Payments: — uplatnica iz događaja (iznos sa servera, zaključan pri izdavanju), cela suma ili dve rate,
    rokovi od datuma prvog časa (pomeraju se za neplaćene), blaga strogost (zakasnela = oznaka za osoblje),
    PDF na zahtev u izgledu Naloga za uplatu (Obrazac 1) + NBS IPS QR, testovi, CI, compose.
    Pravila su podešavanja, ne konstante u kodu.

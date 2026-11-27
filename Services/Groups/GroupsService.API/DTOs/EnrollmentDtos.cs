@@ -1,21 +1,41 @@
-﻿namespace GroupsService.API.DTOs;
+﻿using GroupsService.Domain.Enums;
+
+namespace GroupsService.API.DTOs;
 
 public class CreateIndividualEnrollmentRequest
 {
     public Guid CourseId { get; set; }
     public Guid ProfessorId { get; set; }
+
+    // Opciono: "Full" (podrazumevano) ili "Installments".
+    public PaymentPlan? PaymentPlan { get; set; }
 }
 
 // Ucenik sam bira grupu (termin) u koju ulazi.
 public class JoinGroupRequest
 {
     public Guid GroupId { get; set; }
+    public PaymentPlan? PaymentPlan { get; set; }
 }
 
 // Profesor/admin ubacuje ucenika u grupu.
 public class AddMemberRequest
 {
     public Guid UserId { get; set; }
+
+    // Izbor ucenika (npr. odgovor iz Google forme); bez vrednosti = odjednom.
+    public PaymentPlan? PaymentPlan { get; set; }
+}
+
+// Telo je opciono: { "paymentPlan": "Installments" }.
+public class AcceptInvitationRequest
+{
+    public PaymentPlan? PaymentPlan { get; set; }
+}
+
+public class ChangePaymentPlanRequest
+{
+    public PaymentPlan PaymentPlan { get; set; }
 }
 
 public class SlotRequest
@@ -38,6 +58,9 @@ public class InvitePartnerRequest
 {
     public Guid CourseId { get; set; }
     public Guid InviteeUserId { get; set; }
+
+    // Izbor placanja inicijatora; pozvani bira svoj pri prihvatanju.
+    public PaymentPlan? PaymentPlan { get; set; }
 }
 
 // Planirani datum i vreme prvog casa. Preporuka je slati sa zonom (npr. "...Z" ili "+01:00");

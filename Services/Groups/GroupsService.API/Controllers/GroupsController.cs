@@ -119,7 +119,7 @@ public class GroupsController : ApiControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> AddMember(Guid groupId, AddMemberRequest request)
     {
-        var result = await _joinGroup.Handle(new JoinGroupCommand(request.UserId, groupId, AddedByStaff: true));
+        var result = await _joinGroup.Handle(new JoinGroupCommand(request.UserId, groupId, AddedByStaff: true, request.PaymentPlan));
 
         await _audit.RecordAsync(CurrentUserId, "AddMember", "Group", groupId,
             $"user={request.UserId}, enrollment={result.EnrollmentId}");

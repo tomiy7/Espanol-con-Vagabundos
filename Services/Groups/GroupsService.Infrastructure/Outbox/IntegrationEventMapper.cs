@@ -49,7 +49,7 @@ public static class IntegrationEventMapper
 
         (Group g, DomainEvents.MemberJoinedConfirmedGroup e) => new Contracts.MemberJoinedConfirmedGroup(
             g.Id, g.CourseId, g.Type.ToString(), g.PlannedStartAt!.Value,
-            new Contracts.GroupMemberInfo(e.EnrollmentId, e.UserId)),
+            Member(g.Members.Single(m => m.EnrollmentId == e.EnrollmentId))),
 
         (Group g, DomainEvents.FirstLessonRescheduled e) => new Contracts.FirstLessonRescheduled(
             g.Id, g.CourseId, e.OldAt, e.NewAt, Members(g)),
@@ -82,6 +82,8 @@ public static class IntegrationEventMapper
         _ => null
     };
 
-    private static List<Contracts.GroupMemberInfo> Members(Group g) =>
-        g.Members.Select(m => new Contracts.GroupMemberInfo(m.EnrollmentId, m.UserId)).ToList();
+    private static List<Contracts.GroupMemberInfo> Members(Group g) => g.Members.Select(Member).ToList();
+
+    private static Contracts.GroupMemberInfo Member(GroupsService.Domain.ValueObjects.GroupMember m) =>
+        new(m.EnrollmentId, m.UserId) { PaymentPlan = m.PaymentPlan.ToString() };
 }

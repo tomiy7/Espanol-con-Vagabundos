@@ -47,6 +47,8 @@ public class InvitePartnerHandler
         if (existing is { Type: EnrollmentType.Pair, GroupId: null })
         {
             inviterEnrollment = existing;
+            if (command.PaymentPlan is { } plan)
+                inviterEnrollment.ChangePaymentPlan(plan);
         }
         else if (existing is not null)
         {
@@ -54,7 +56,8 @@ public class InvitePartnerHandler
         }
         else
         {
-            inviterEnrollment = Enrollment.CreateSearching(command.InviterUserId, command.CourseId, EnrollmentType.Pair);
+            inviterEnrollment = Enrollment.CreateSearching(
+                command.InviterUserId, command.CourseId, EnrollmentType.Pair, command.PaymentPlan ?? PaymentPlan.Full);
             await _enrollmentRepository.AddAsync(inviterEnrollment);
         }
 
