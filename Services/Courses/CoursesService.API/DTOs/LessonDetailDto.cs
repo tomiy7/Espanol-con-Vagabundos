@@ -6,6 +6,7 @@ namespace CoursesService.API.DTOs;
 public class LessonDetailDto
 {
     public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
     public string Title { get; set; } = string.Empty;
     public int Order { get; set; }
     public string? RecordingUrl { get; set; }
@@ -17,7 +18,8 @@ public class SectionDto
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
-    public string? Content { get; set; }
+    // JSON objekat iz Directus-a (jsonb); ako u bazi nije validan JSON, salje se kao string.
+    public object? Content { get; set; }
     public int Order { get; set; }
 }
 

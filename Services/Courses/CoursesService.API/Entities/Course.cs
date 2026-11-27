@@ -30,6 +30,16 @@ public class Course
     
     [Column("ebook_price")]
     public decimal? EbookPrice { get; set; }
+
+    // Cene kursa po osobi, po tipu upisa (polja dodata u Directus-u). Null dok osoblje ne unese cenu.
+    [Column("price_individual")]
+    public decimal? PriceIndividual { get; set; }
+
+    [Column("price_pair")]
+    public decimal? PricePair { get; set; }
+
+    [Column("price_group")]
+    public decimal? PriceGroup { get; set; }
     
     [Column("level")]
     [MaxLength(20)]

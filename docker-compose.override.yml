@@ -52,6 +52,8 @@ services:
     environment:
       - ConnectionStrings__Default=Host=coursesdb;Port=5432;Database=coursesdb;Username=postgres;Password=${DB_PASSWORD}
       - Jwt__Secret=${JWT_SECRET}
+      # Courses pita Groups da li ucenik sme da otvori lekciju (GET /enrollments/access).
+      - GroupsService__BaseUrl=http://groups.api:8080
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       - coursesdb
